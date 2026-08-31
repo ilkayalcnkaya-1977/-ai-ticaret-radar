@@ -1,95 +1,139 @@
-export default async function handler(req, res) {
-  try {
-    const {
-      cost = 0,
-      sale = 0,
-      demand = 50,
-      competition = "Orta"
-    } = req.query;
+function calculateOpportunity(){
 
-    const maliyet = Number(cost);
-    const satis = Number(sale);
-    const talep = Number(demand);
+  const cost = Number(document.getElementById("cost").value);
+  const sale = Number(document.getElementById("sale").value);
+  const demand = Number(document.getElementById("demand").value);
 
-    if (!maliyet || !satis || maliyet < 0 || satis < 0) {
-      return res.status(400).json({
-        success: false,
-        error: "Maliyet ve satış fiyatı girilmelidir."
-      });
-    }
+  const competition =
+    document.getElementById("competition").value;
 
-    const brutKar = satis - maliyet;
+  const result =
+    document.getElementById("result");
 
-    const marj = satis > 0
-      ? (brutKar / satis) * 100
-      : 0;
+  if(!cost || !sale || sale <= cost){
 
-    let rekabetPuani = 60;
+    result.style.display = "block";
 
-    if (competition === "Düşük") {
-      rekabetPuani = 90;
-    }
+    result.innerHTML = `
+      <div class="result-title">KARAR MOTORU</div>
 
-    if (competition === "Orta") {
-      rekabetPuani = 65;
-    }
+      <strong>🔴 UZAK DUR</strong>
 
-    if (competition === "Yüksek") {
-      rekabetPuani = 35;
-    }
+      <div class="recommend">
+        Satış fiyatı maliyetten yüksek olmalı.
+      </div>
+    `;
 
-    const marjPuani = Math.max(
-      0,
-      Math.min(100, marj)
-    );
-
-    const firsatSkoru = Math.round(
-      (talep * 0.4) +
-      (marjPuani * 0.4) +
-      (rekabetPuani * 0.2)
-    );
-
-    let karar = "İNCELENMELİ";
-
-    if (firsatSkoru >= 80) {
-      karar = "GÜÇLÜ FIRSAT";
-    } else if (firsatSkoru >= 65) {
-      karar = "DEĞERLENDİR";
-    } else if (firsatSkoru < 45) {
-      karar = "ZAYIF FIRSAT";
-    }
-
-    res.status(200).json({
-      success: true,
-
-      maliyet,
-      satis,
-
-      brutKar: Math.round(brutKar),
-
-      marj: Number(marj.toFixed(1)),
-
-      talep,
-      rekabet: competition,
-      rekabetPuani,
-
-      firsatSkoru,
-      karar,
-
-      hesaplama: {
-        talepAgirligi: "40%",
-        marjAgirligi: "40%",
-        rekabetAgirligi: "20%"
-      },
-
-      uyari:
-        "Bu hesaplama tahmindir; gerçek satış, maliyet ve kâr garantisi değildir."
-    });
-
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error.message
-    });
+    return;
   }
+
+  const profit = sale - cost;
+
+  const margin =
+    (profit / sale) * 100;
+
+  let competitionScore = 65;
+
+  if(competition === "Düşük")
+    competitionScore = 90;
+
+  if(competition === "Yüksek")
+    competitionScore = 40;
+
+  /*
+    Ticari fırsat skoru:
+    %40 talep
+    %40 kâr marjı
+    %20 rekabet
+  */
+
+  const marginScore =
+    Math.min(margin * 2, 100);
+
+  const opportunityScore = Math.round(
+    demand * 0.40 +
+    marginScore * 0.40 +
+    competitionScore * 0.20
+  );
+
+  let decision = "";
+  let emoji = "";
+
+  if(opportunityScore >= 80){
+
+    decision = "AL";
+    emoji = "🟢";
+
+  }else if(opportunityScore >= 60){
+
+    decision = "TEST ET";
+    emoji = "🟡";
+
+  }else if(opportunityScore >= 40){
+
+    decision = "İNCELE";
+    emoji = "🟠";
+
+  }else{
+
+    decision = "UZAK DUR";
+    emoji = "🔴";
+
+  }
+
+  result.style.display = "block";
+
+  result.innerHTML = `
+
+    <div class="result-title">
+      TİCARİ KARAR MOTORU
+    </div>
+
+    <strong>
+      ${emoji} ${decision}
+    </strong>
+
+    <div class="recommend">
+
+      <b>Fırsat skoru:</b>
+      ${opportunityScore}/100
+      <br><br>
+
+      <b>Ürün maliyeti:</b>
+      ${cost.toLocaleString("tr-TR")} TL
+      <br>
+
+      <b>Satış fiyatı:</b>
+      ${sale.toLocaleString("tr-TR")} TL
+      <br>
+
+      <b>Birim kâr:</b>
+      ${profit.toLocaleString("tr-TR")} TL
+      <br>
+
+      <b>Kâr marjı:</b>
+      ${margin.toFixed(1)}%
+      <br>
+
+      <b>Talep:</b>
+      ${demand}/100
+      <br>
+
+      <b>Rekabet:</b>
+      ${competition}
+
+      <br><br>
+
+      <b>Karar:</b>
+      ${decision === "AL"
+        ? "Güçlü ticari sinyal. Ürün ciddi şekilde değerlendirilebilir."
+        : decision === "TEST ET"
+        ? "Potansiyel var. Önce küçük stokla test etmek daha güvenli."
+        : decision === "İNCELE"
+        ? "Sinyal orta seviyede. Maliyet ve talep tekrar kontrol edilmeli."
+        : "Risk yüksek. Bu ürüne şu aşamada girme."
+      }
+
+    </div>
+  `;
 }
