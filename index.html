@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="AI Ticaret Radar - ticaret fırsatlarını analiz eden akıllı radar.">
+<meta name="description" content="AI Ticaret Radar">
 <title>AI Ticaret Radar</title>
 
 <style>
@@ -29,7 +29,7 @@ header{
   align-items:center;
   justify-content:space-between;
   border-bottom:1px solid #20344b;
-  background:rgba(7,17,31,.94);
+  background:#07111f;
   position:sticky;
   top:0;
   z-index:10;
@@ -58,9 +58,7 @@ header{
   margin-right:7px;
 }
 
-.hero,
-.content,
-footer{
+.hero,.content,footer{
   max-width:1150px;
   margin:auto;
   padding-left:6%;
@@ -68,8 +66,8 @@ footer{
 }
 
 .hero{
-  padding-top:65px;
-  padding-bottom:35px;
+  padding-top:60px;
+  padding-bottom:30px;
 }
 
 .eyebrow{
@@ -96,7 +94,7 @@ footer{
 
 .content{
   padding-top:20px;
-  padding-bottom:65px;
+  padding-bottom:60px;
 }
 
 .grid{
@@ -123,23 +121,29 @@ footer{
 }
 
 .opportunity{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
   padding:16px;
   border-radius:14px;
   background:#091624;
   border:1px solid #20364e;
 }
 
+.topline{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+}
+
 .product{
   font-weight:800;
-  margin-bottom:6px;
+  font-size:16px;
 }
 
 .details{
   color:#8196ab;
   font-size:13px;
+  line-height:1.5;
+  margin-top:6px;
 }
 
 .badge{
@@ -149,6 +153,7 @@ footer{
   border-radius:999px;
   font-size:12px;
   font-weight:800;
+  white-space:nowrap;
 }
 
 .big-score{
@@ -186,23 +191,34 @@ footer{
   color:#58d68d;
 }
 
-button{
+.scan{
+  margin-top:20px;
+  width:100%;
   border:0;
   border-radius:11px;
   padding:13px 16px;
+  background:#58d68d;
+  color:#06130c;
   font-weight:800;
   cursor:pointer;
 }
 
-.scan{
-  margin-top:20px;
-  width:100%;
-  background:#58d68d;
-  color:#06130c;
+.scan:disabled{
+  opacity:.6;
 }
 
-button:disabled{
-  opacity:.6;
+.loading{
+  padding:25px;
+  text-align:center;
+  color:#8196ab;
+}
+
+.error{
+  padding:18px;
+  border-radius:12px;
+  background:#30191d;
+  color:#ff9da5;
+  display:none;
 }
 
 .section{
@@ -228,21 +244,23 @@ button:disabled{
   margin-bottom:7px;
 }
 
-.field input,
-.field select{
+.field input,.field select{
   width:100%;
   background:#071421;
   border:1px solid #294158;
   color:#fff;
   padding:12px;
   border-radius:10px;
-  outline:none;
 }
 
 .calculate{
   margin-top:15px;
+  border:0;
+  border-radius:11px;
+  padding:13px 16px;
   background:#fff;
   color:#07111f;
+  font-weight:800;
 }
 
 .result{
@@ -259,46 +277,6 @@ button:disabled{
   color:#58d68d;
 }
 
-.signal{
-  margin-top:7px;
-  color:#a9bbcc;
-  font-size:13px;
-}
-
-.steps{
-  display:grid;
-  gap:14px;
-}
-
-.step{
-  display:flex;
-  gap:13px;
-  align-items:flex-start;
-}
-
-.num{
-  min-width:28px;
-  height:28px;
-  border-radius:50%;
-  background:#123d2d;
-  color:#72e6a3;
-  display:grid;
-  place-items:center;
-  font-weight:800;
-  font-size:13px;
-}
-
-.step b{
-  display:block;
-  margin-bottom:4px;
-}
-
-.step span{
-  color:#8196ab;
-  font-size:13px;
-  line-height:1.4;
-}
-
 .night{
   margin-top:18px;
 }
@@ -310,8 +288,7 @@ footer{
 }
 
 @media(max-width:800px){
-  .grid,
-  .section-grid{
+  .grid,.section-grid{
     grid-template-columns:1fr;
   }
 
@@ -337,10 +314,9 @@ footer{
 
   <div class="status">
     <span class="dot"></span>
-    Radar aktif
+    <span id="status">Radar aktif</span>
   </div>
 </header>
-
 
 <section class="hero">
 
@@ -354,12 +330,11 @@ footer{
   </h1>
 
   <p>
-    Trend, rekabet, fiyat ve marj sinyallerini tek panelde
-    birleştiren AI destekli ticaret radarının ilk çalışan sürümü.
+    Türkiye'deki gerçek arama trendlerini tarıyor,
+    ticari açıdan anlamlı sinyalleri öne çıkarıyor.
   </p>
 
 </section>
-
 
 <main class="content">
 
@@ -367,46 +342,15 @@ footer{
 
 <div class="card">
 
-<h2>🔥 Bugünün Fırsatları</h2>
+<h2>🔥 Canlı Trend Sinyalleri</h2>
 
-<div class="opportunities">
-
-<div class="opportunity">
-<div>
-<div class="product">Keten Gömlek</div>
-<div class="details">
-Talep yükseliyor · Rekabet orta
-</div>
+<div id="opportunities" class="opportunities">
+  <div class="loading">
+    Gerçek trendler taranıyor...
+  </div>
 </div>
 
-<div class="badge">87 / 100</div>
-</div>
-
-
-<div class="opportunity">
-<div>
-<div class="product">Oversize Yazlık Gömlek</div>
-<div class="details">
-Trend ivmesi yüksek
-</div>
-</div>
-
-<div class="badge">81 / 100</div>
-</div>
-
-
-<div class="opportunity">
-<div>
-<div class="product">Doğal Kumaş Şort</div>
-<div class="details">
-Marj potansiyeli yüksek
-</div>
-</div>
-
-<div class="badge">76 / 100</div>
-</div>
-
-</div>
+<div id="error" class="error"></div>
 
 </div>
 
@@ -415,27 +359,27 @@ Marj potansiyeli yüksek
 
 <h2>📡 Radar Skoru</h2>
 
-<div class="big-score" id="score">87</div>
+<div class="big-score" id="score">—</div>
 
 <div class="muted">
-Günün genel fırsat skoru
+  Canlı trendlerden hesaplanan genel sinyal
 </div>
 
 <div class="metrics">
 
 <div class="metric">
-<div class="muted">Trend</div>
-<strong class="green">↑ 38%</strong>
+<div class="muted">Trend adedi</div>
+<strong id="trendCount">—</strong>
 </div>
 
 <div class="metric">
-<div class="muted">Rekabet</div>
-<strong>Orta</strong>
+<div class="muted">En güçlü sinyal</div>
+<strong id="bestScore">—</strong>
 </div>
 
 </div>
 
-<button class="scan" onclick="scanRadar()">
+<button class="scan" id="scanButton" onclick="loadRadar()">
 Radar Tara
 </button>
 
@@ -463,19 +407,17 @@ Radar Tara
 </div>
 
 <div class="field">
-<label>Talep skoru (0-100)</label>
+<label>Talep skoru</label>
 <input id="demand" type="number" value="75" min="0" max="100">
 </div>
 
 <div class="field">
 <label>Rekabet</label>
-
 <select id="competition">
 <option value="90">Düşük</option>
 <option value="65" selected>Orta</option>
 <option value="35">Yüksek</option>
 </select>
-
 </div>
 
 </div>
@@ -491,7 +433,7 @@ Fırsat skoru:
 <strong id="resultScore">—</strong>
 </div>
 
-<div class="signal" id="resultText"></div>
+<div class="details" id="resultText"></div>
 
 </div>
 
@@ -500,47 +442,27 @@ Fırsat skoru:
 
 <div class="card">
 
-<h2>⚙️ Sistem Nasıl Çalışıyor?</h2>
+<h2>⚙️ Radar Mantığı</h2>
 
-<div class="steps">
+<div class="details">
 
-<div class="step">
-<div class="num">1</div>
+<strong>1. Gerçek veri</strong><br>
+Türkiye'deki güncel Google arama trendleri alınır.
 
-<div>
-<b>Veri topla</b>
+<br><br>
 
-<span>
-Trend, fiyat, rekabet ve talep sinyalleri bir araya getirilir.
-</span>
-</div>
-</div>
+<strong>2. Ticari filtre</strong><br>
+Haber, spor ve kişi aramaları ile ürün/ticaret sinyalleri ayrıştırılır.
 
+<br><br>
 
-<div class="step">
-<div class="num">2</div>
+<strong>3. Fırsat skoru</strong><br>
+Trend gücü ve ticari uygunluk birlikte değerlendirilir.
 
-<div>
-<b>AI analiz et</b>
+<br><br>
 
-<span>
-Sinyaller ağırlıklandırılır ve her fırsata 0–100 arası skor verilir.
-</span>
-</div>
-</div>
-
-
-<div class="step">
-<div class="num">3</div>
-
-<div>
-<b>Ticarete dönüştür</b>
-
-<span>
-Maliyet, satış fiyatı ve tahmini marj karşılaştırılır.
-</span>
-</div>
-</div>
+<strong>4. Gece taraması</strong><br>
+Sistem gece otomatik olarak yeniden kontrol edilir.
 
 </div>
 
@@ -554,8 +476,8 @@ Maliyet, satış fiyatı ve tahmini marj karşılaştırılır.
 <h2>🌙 Gece Modu</h2>
 
 <div class="details">
-Otomatik radar taraması planlandı.
-Yeni fırsatlar tespit edildiğinde rapor oluşturulacak.
+Otomatik gece taraması aktif.
+Önemli yeni sinyaller raporlanacak.
 </div>
 
 <div class="metrics">
@@ -566,8 +488,8 @@ Yeni fırsatlar tespit edildiğinde rapor oluşturulacak.
 </div>
 
 <div class="metric">
-<div class="muted">Son tarama</div>
-<strong>Hazır</strong>
+<div class="muted">Veri kaynağı</div>
+<strong>TR</strong>
 </div>
 
 </div>
@@ -576,9 +498,8 @@ Yeni fırsatlar tespit edildiğinde rapor oluşturulacak.
 
 </main>
 
-
 <footer>
-AI Ticaret Radar · MVP v0.2 · Sinyaller yatırım veya kâr garantisi değildir.
+AI Ticaret Radar · v0.3 · Trend verisi ticari başarı veya kâr garantisi değildir.
 </footer>
 
 </div>
@@ -586,119 +507,379 @@ AI Ticaret Radar · MVP v0.2 · Sinyaller yatırım veya kâr garantisi değildi
 
 <script>
 
-function scanRadar(){
+const commercialWords = [
+  "ürün",
+  "fiyat",
+  "indirim",
+  "kampanya",
+  "satın",
+  "satış",
+  "mağaza",
+  "market",
+  "telefon",
+  "iphone",
+  "samsung",
+  "ayakkabı",
+  "çanta",
+  "elbise",
+  "gömlek",
+  "pantolon",
+  "şort",
+  "etek",
+  "mont",
+  "ceket",
+  "parfüm",
+  "kozmetik",
+  "kahve",
+  "makine",
+  "aksesuar",
+  "mobilya",
+  "ev",
+  "araba",
+  "otomobil",
+  "elektronik"
+];
 
-  const button=document.querySelector(".scan");
+const noiseWords = [
+  "maç",
+  "puan",
+  "futbol",
+  "spor",
+  "son dakika",
+  "kimdir",
+  "kaç yaşında",
+  "transfer",
+  "seçim",
+  "siyaset",
+  "başbakan",
+  "yangın",
+  "deprem",
+  "hava durumu"
+];
 
-  button.innerText="Taranıyor...";
+
+function cleanText(text){
+
+  return text
+    .toLowerCase()
+    .trim();
+
+}
+
+
+function commercialScore(trend){
+
+  const text=cleanText(trend.trend);
+
+  let score=Number(trend.score)||50;
+
+  const hasCommercial=
+    commercialWords.some(word=>text.includes(word));
+
+  const hasNoise=
+    noiseWords.some(word=>text.includes(word));
+
+  if(hasCommercial){
+    score+=12;
+  }
+
+  if(hasNoise){
+    score-=28;
+  }
+
+  return Math.max(0,Math.min(100,score));
+}
+
+
+function productIdea(trend){
+
+  const text=cleanText(trend.trend);
+
+  if(
+    text.includes("kahve") ||
+    text.includes("coffee")
+  ){
+    return "Kahve / kahve ekipmanı";
+  }
+
+  if(
+    text.includes("iphone") ||
+    text.includes("telefon") ||
+    text.includes("samsung")
+  ){
+    return "Telefon aksesuarları";
+  }
+
+  if(
+    text.includes("ayakkabı")
+  ){
+    return "Ayakkabı / aksesuar";
+  }
+
+  if(
+    text.includes("gömlek") ||
+    text.includes("pantolon") ||
+    text.includes("şort") ||
+    text.includes("elbise")
+  ){
+    return "Moda ürünü";
+  }
+
+  if(
+    text.includes("ev") ||
+    text.includes("mobilya")
+  ){
+    return "Ev yaşam ürünleri";
+  }
+
+  if(
+    text.includes("parfüm") ||
+    text.includes("kozmetik")
+  ){
+    return "Kozmetik / bakım";
+  }
+
+  return "İncelenecek ticari kategori";
+}
+
+
+function renderTrends(data){
+
+  const container=
+    document.getElementById("opportunities");
+
+  const error=
+    document.getElementById("error");
+
+  error.style.display="none";
+
+  const trends=
+    (data.trends||[])
+    .map(item=>({
+      ...item,
+      commercialScore:commercialScore(item)
+    }))
+    .sort(
+      (a,b)=>b.commercialScore-a.commercialScore
+    );
+
+  const top=trends.slice(0,5);
+
+  if(!top.length){
+
+    container.innerHTML=
+      '<div class="loading">Trend bulunamadı.</div>';
+
+    return;
+  }
+
+  container.innerHTML=
+    top.map(item=>{
+
+      const idea=productIdea(item);
+
+      return `
+      <div class="opportunity">
+
+        <div class="topline">
+
+          <div class="product">
+            ${escapeHtml(item.trend)}
+          </div>
+
+          <div class="badge">
+            ${item.commercialScore}/100
+          </div>
+
+        </div>
+
+        <div class="details">
+          Arama hacmi: ${escapeHtml(item.traffic)}
+          · Ticari aday: ${escapeHtml(idea)}
+        </div>
+
+      </div>
+      `;
+
+    }).join("");
+
+
+  const scores=
+    top.map(x=>x.commercialScore);
+
+  const average=
+    Math.round(
+      scores.reduce((a,b)=>a+b,0)/scores.length
+    );
+
+  document.getElementById("score")
+    .innerText=average;
+
+  document.getElementById("trendCount")
+    .innerText=data.count||top.length;
+
+  document.getElementById("bestScore")
+    .innerText=Math.max(...scores);
+
+}
+
+
+function escapeHtml(value){
+
+  return String(value)
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+
+async function loadRadar(){
+
+  const button=
+    document.getElementById("scanButton");
+
+  const status=
+    document.getElementById("status");
+
+  const container=
+    document.getElementById("opportunities");
+
+  const error=
+    document.getElementById("error");
+
   button.disabled=true;
+  button.innerText="Taranıyor...";
+  status.innerText="Veri alınıyor...";
 
-  setTimeout(function(){
+  container.innerHTML=
+    '<div class="loading">Türkiye trendleri taranıyor...</div>';
 
-    const newScore=Math.floor(82+Math.random()*12);
+  error.style.display="none";
 
-    document.getElementById("score").innerText=newScore;
+  try{
 
-    button.innerText="Tarama tamamlandı ✓";
+    const response=
+      await fetch("/api/radar?refresh="+Date.now());
 
-    setTimeout(function(){
+    if(!response.ok){
+      throw new Error(
+        "Radar API yanıt vermedi."
+      );
+    }
 
-      button.innerText="Radar Tara";
+    const data=
+      await response.json();
+
+    if(!data.success){
+      throw new Error(
+        data.error||"Trend verisi alınamadı."
+      );
+    }
+
+    renderTrends(data);
+
+    status.innerText=
+      "Son tarama: şimdi";
+
+    button.innerText=
+      "Tarama tamamlandı ✓";
+
+  }
+  catch(errorObject){
+
+    console.error(errorObject);
+
+    error.innerText=
+      "Radar bağlantısında sorun oluştu: "+
+      errorObject.message;
+
+    error.style.display="block";
+
+    container.innerHTML="";
+
+    status.innerText="Bağlantı hatası";
+
+    button.innerText="Tekrar Dene";
+
+  }
+  finally{
+
+    setTimeout(()=>{
+
       button.disabled=false;
+
+      if(button.innerText!=="Tekrar Dene"){
+        button.innerText="Radar Tara";
+      }
 
     },1800);
 
-  },1000);
+  }
+
 }
 
 
 function calculateOpportunity(){
 
-  const cost=Number(
-    document.getElementById("cost").value
-  );
+  const cost=
+    Number(document.getElementById("cost").value);
 
-  const price=Number(
-    document.getElementById("price").value
-  );
+  const price=
+    Number(document.getElementById("price").value);
 
-  const demand=Math.max(
-    0,
-    Math.min(
-      100,
-      Number(document.getElementById("demand").value)||0
-    )
-  );
+  const demand=
+    Math.max(
+      0,
+      Math.min(
+        100,
+        Number(document.getElementById("demand").value)||0
+      )
+    );
 
-  const competition=Number(
-    document.getElementById("competition").value
-  );
-
+  const competition=
+    Number(
+      document.getElementById("competition").value
+    );
 
   if(!cost || !price || price<=cost){
 
     alert(
-      "Maliyet ve satış fiyatını doğru gir başkan. Satış fiyatı maliyetten yüksek olmalı."
+      "Maliyet ve satış fiyatını doğru gir."
     );
 
     return;
   }
 
+  const margin=
+    ((price-cost)/price)*100;
 
-  const margin=((price-cost)/price)*100;
+  const marginScore=
+    Math.min(100,margin*2);
 
-  const marginScore=Math.min(
-    100,
-    margin*2
-  );
-
-
-  const score=Math.round(
-    demand*0.45 +
-    competition*0.25 +
-    marginScore*0.30
-  );
-
+  const score=
+    Math.round(
+      demand*0.45+
+      competition*0.25+
+      marginScore*0.30
+    );
 
   document.getElementById("resultScore")
     .innerText=score+"/100";
 
-
-  let message="";
-
-  if(score>=80){
-
-    message=
-    "Tahmini brüt marj: %"+
-    margin.toFixed(1)+
-    " · Güçlü fırsat sinyali.";
-
-  }
-  else if(score>=65){
-
-    message=
-    "Tahmini brüt marj: %"+
-    margin.toFixed(1)+
-    " · İzlemeye değer fırsat.";
-
-  }
-  else{
-
-    message=
-    "Tahmini brüt marj: %"+
-    margin.toFixed(1)+
-    " · Şimdilik temkinli ilerle.";
-
-  }
-
-
   document.getElementById("resultText")
-    .innerText=message;
-
+    .innerText=
+      "Tahmini brüt marj: %"+
+      margin.toFixed(1)+
+      " · Bu skor yalnızca ön değerlendirme sinyalidir.";
 
   document.getElementById("result")
     .style.display="block";
 }
+
+
+loadRadar();
 
 </script>
 
