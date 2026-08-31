@@ -952,14 +952,143 @@
 
   function applyFilters() {
 
-    const query =
-      search.value
-        .trim()
+  const query =
+    search.value
+      .trim()
+      .toLocaleLowerCase("tr-TR");
+
+  let filtered =
+    trends.filter(item => {
+
+      const text = [
+        item.trend,
+        item.category,
+        item.productIdea,
+        item.product_idea,
+        item.idea,
+        item.traffic
+      ]
+        .join(" ")
         .toLocaleLowerCase("tr-TR");
 
+      return !query || text.includes(query);
 
-    let filtered =
-      trends.filter(item => {
+    });
+
+
+  /*
+   * GERÇEK TİCARİ FİLTRE
+   * Spor, maç, futbolcu, takım, ünlü vb.
+   * gündem kelimelerini ticari fırsat sayma.
+   */
+
+  const blockedWords = [
+    "maç",
+    "maçlar",
+    "futbol",
+    "futbolcu",
+    "lig",
+    "süper lig",
+    "puan durumu",
+    "skor",
+    "transfer",
+    "takım",
+    "barca",
+    "barcelona",
+    "rayo",
+    "bjk",
+    "galatasaray",
+    "fenerbahçe",
+    "beşiktaş",
+    "spor",
+    "oyuncu",
+    "ünlü",
+    "celebrity",
+    "şarkıcı",
+    "dizi",
+    "film"
+  ];
+
+
+  function isRealCommercial(item) {
+
+    const score = getScore(item);
+
+    const combinedText = [
+      item.trend,
+      item.category,
+      item.productIdea,
+      item.product_idea,
+      item.idea
+    ]
+      .join(" ")
+      .toLocaleLowerCase("tr-TR");
+
+
+    const blocked =
+      blockedWords.some(word =>
+        combinedText.includes(word)
+      );
+
+
+    if (blocked) {
+      return false;
+    }
+
+
+    return (
+      item.commercial === true ||
+      score >= 65
+    );
+
+  }
+
+
+  if (activeFilter === "hot") {
+
+    filtered =
+      filtered.filter(item =>
+        getScore(item) >= 85 &&
+        !blockedWords.some(word =>
+          [
+            item.trend,
+            item.category,
+            item.productIdea,
+            item.product_idea,
+            item.idea
+          ]
+            .join(" ")
+            .toLocaleLowerCase("tr-TR")
+            .includes(word)
+        )
+      );
+
+  }
+
+
+  if (activeFilter === "commercial") {
+
+    filtered =
+      filtered.filter(item =>
+        isRealCommercial(item)
+      );
+
+  }
+
+
+  if (activeFilter === "watch") {
+
+    filtered =
+      filtered.filter(item =>
+        getScore(item) < 65
+      );
+
+  }
+
+
+  renderTrends(filtered);
+
+}
 
         const text = [
 
