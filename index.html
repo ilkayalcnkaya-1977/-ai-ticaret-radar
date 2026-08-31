@@ -1,409 +1,1526 @@
-export default async function handler(req, res) {
-  try {
-    const controller = new AbortController();
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 15000);
+  <title>AI Ticaret Radar</title>
 
-    const response = await fetch(
-      "https://trends.google.com/trending/rss?geo=TR",
-      {
-        method: "GET",
-        signal: controller.signal,
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
-          "Accept":
-            "application/rss+xml, application/xml, text/xml, */*"
-        }
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: #07111e;
+      color: #f5f7fa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    }
+
+    .container {
+      width: min(1100px, calc(100% - 32px));
+      margin: auto;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(7, 17, 30, 0.96);
+      border-bottom: 1px solid #203650;
+      backdrop-filter: blur(14px);
+    }
+
+    .header-inner {
+      min-height: 90px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: -0.7px;
+    }
+
+    .logo span,
+    .hero h1 span {
+      color: #7edb99;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #aab8cc;
+      white-space: nowrap;
+    }
+
+    .status-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #7edb99;
+      box-shadow: 0 0 22px #7edb99;
+    }
+
+    .hero {
+      padding: 70px 0 40px;
+    }
+
+    .hero h1 {
+      font-size: clamp(42px, 8vw, 76px);
+      line-height: 0.98;
+      margin: 0 0 22px;
+      letter-spacing: -3px;
+    }
+
+    .hero p {
+      max-width: 720px;
+      color: #9eafc6;
+      font-size: 19px;
+      line-height: 1.65;
+      margin: 0;
+    }
+
+    .section {
+      margin: 28px 0;
+      padding: 28px;
+      border: 1px solid #223b59;
+      border-radius: 28px;
+      background: #0d1929;
+    }
+
+    .section-title {
+      font-size: 34px;
+      margin: 0 0 22px;
+    }
+
+    .section-subtitle {
+      color: #9eafc6;
+      margin-top: -10px;
+      margin-bottom: 25px;
+      line-height: 1.5;
+    }
+
+    .search {
+      width: 100%;
+      padding: 19px 20px;
+      border-radius: 16px;
+      border: 1px solid #355578;
+      background: #07111e;
+      color: white;
+      font-size: 17px;
+      outline: none;
+      margin-bottom: 16px;
+    }
+
+    .search:focus {
+      border-color: #7edb99;
+    }
+
+    /* FİLTRELER */
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+      margin-bottom: 22px;
+      scrollbar-width: none;
+    }
+
+    .filters::-webkit-scrollbar {
+      display: none;
+    }
+
+    .filter {
+      flex: 0 0 auto;
+      border: 1px solid #294666;
+      background: #091522;
+      color: #aab8cc;
+      padding: 11px 16px;
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .filter.active {
+      background: #7edb99;
+      border-color: #7edb99;
+      color: #06110b;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .stat {
+      padding: 22px;
+      border-radius: 20px;
+      background: #091522;
+      border: 1px solid #203650;
+    }
+
+    .stat-label {
+      color: #9eafc6;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 34px;
+      font-weight: 800;
+      color: #7edb99;
+    }
+
+    .trend-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .trend {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 23px;
+      border-radius: 20px;
+      border: 1px solid #294666;
+      background: #091522;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .trend:hover {
+      border-color: #7edb99;
+      transform: translateY(-2px);
+    }
+
+    .trend-name {
+      font-size: 23px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .trend-info {
+      color: #9eafc6;
+      line-height: 1.6;
+    }
+
+    .trend-idea {
+      margin-top: 10px;
+      color: #cbd6e5;
+      font-size: 14px;
+    }
+
+    .badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      border: 1px solid #3d9360;
+      color: #7edb99;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .score {
+      min-width: 92px;
+      text-align: center;
+      padding: 15px 12px;
+      border-radius: 18px;
+      background: #225e43;
+      color: #8de0a4;
+      font-size: 23px;
+      font-weight: 800;
+    }
+
+    .score.hot {
+      background: #315e3d;
+    }
+
+    .score.medium {
+      background: #4b4624;
+      color: #e6d77b;
+    }
+
+    .score.low {
+      background: #263445;
+      color: #aab8cc;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 35px;
+      color: #9eafc6;
+    }
+
+    .error {
+      padding: 20px;
+      border: 1px solid #774747;
+      border-radius: 16px;
+      color: #ffb5b5;
+      background: #261416;
+    }
+
+    /* FIRSAT MOTORU */
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+    }
+
+    .field label {
+      display: block;
+      color: #9eafc6;
+      margin-bottom: 9px;
+      font-size: 14px;
+    }
+
+    .field input,
+    .field select {
+      width: 100%;
+      padding: 17px;
+      border-radius: 15px;
+      border: 1px solid #355578;
+      background: #07111e;
+      color: white;
+      font-size: 17px;
+      outline: none;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: #7edb99;
+    }
+
+    .button {
+      width: 100%;
+      border: 0;
+      border-radius: 17px;
+      padding: 20px;
+      margin-top: 18px;
+      background: #82d99b;
+      color: #06110b;
+      font-size: 19px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .button:active {
+      transform: scale(0.99);
+    }
+
+    .result {
+      display: none;
+      margin-top: 22px;
+      padding: 26px;
+      border-radius: 22px;
+      border: 1px solid #355578;
+      background: #091522;
+    }
+
+    .result-title {
+      color: #7edb99;
+      font-size: 18px;
+      font-weight: 800;
+      margin-bottom: 18px;
+    }
+
+    .decision {
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 18px;
+    }
+
+    .recommend {
+      color: #b4c1d2;
+      line-height: 1.8;
+    }
+
+    .selected {
+      padding: 15px 18px;
+      border-radius: 15px;
+      background: #102337;
+      border: 1px solid #294666;
+      margin-bottom: 18px;
+      color: #dce5ef;
+    }
+
+    .result-score {
+      font-size: 46px;
+      font-weight: 900;
+      color: #7edb99;
+      margin-bottom: 10px;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .mini-card {
+      padding: 15px;
+      border-radius: 15px;
+      background: #102337;
+      border: 1px solid #294666;
+    }
+
+    .mini-card span {
+      display: block;
+      color: #8fa1b8;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .mini-card strong {
+      font-size: 18px;
+    }
+
+    footer {
+      padding: 50px 0;
+      color: #72839a;
+      text-align: center;
+    }
+
+    @media (max-width: 700px) {
+
+      .header-inner {
+        min-height: 75px;
       }
+
+      .logo {
+        font-size: 20px;
+      }
+
+      .status {
+        font-size: 14px;
+      }
+
+      .hero {
+        padding-top: 45px;
+      }
+
+      .section {
+        padding: 20px;
+        border-radius: 22px;
+      }
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .mini-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .trend {
+        align-items: flex-start;
+      }
+
+      .trend-name {
+        font-size: 20px;
+      }
+
+      .score {
+        min-width: 80px;
+        font-size: 19px;
+      }
+
+      .hero p {
+        font-size: 17px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="container header-inner">
+
+    <div class="logo">
+      AI <span>TİCARET RADAR</span>
+    </div>
+
+    <div class="status">
+      <span class="status-dot"></span>
+      <span id="statusText">Radar aktif</span>
+    </div>
+
+  </div>
+</header>
+
+
+<main class="container">
+
+  <section class="hero">
+
+    <h1>
+      Ticari fırsatları<br>
+      <span>yakala.</span>
+    </h1>
+
+    <p>
+      Güncel Google Trends verisini ticari açıdan değerlendirir,
+      ürün talebini analiz eder ve hangi ürünlerin test edilmeye
+      değer olduğunu gösterir.
+    </p>
+
+  </section>
+
+
+  <!-- CANLI TREND RADARI -->
+
+  <section class="section">
+
+    <h2 class="section-title">
+      🔥 Canlı Trend Sinyalleri
+    </h2>
+
+    <p class="section-subtitle">
+      Türkiye'deki güncel trendlerden ticari potansiyeli yüksek
+      olanları otomatik olarak öne çıkarıyoruz.
+    </p>
+
+
+    <input
+      id="search"
+      class="search"
+      type="search"
+      placeholder="Trend ara... örn. keten, telefon, ayakkabı"
+      autocomplete="off"
+    >
+
+
+    <div class="filters">
+
+      <button class="filter active" data-filter="all">
+        Tümü
+      </button>
+
+      <button class="filter" data-filter="hot">
+        🔥 Çok sıcak
+      </button>
+
+      <button class="filter" data-filter="commercial">
+        💰 Ticari fırsat
+      </button>
+
+      <button class="filter" data-filter="watch">
+        👀 İzle
+      </button>
+
+    </div>
+
+
+    <div class="stats">
+
+      <div class="stat">
+        <div class="stat-label">
+          Gösterilen trend
+        </div>
+
+        <div id="trendCount" class="stat-value">
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          En güçlü sinyal
+        </div>
+
+        <div id="bestScore" class="stat-value">
+          —
+        </div>
+      </div>
+
+
+      <div class="stat">
+        <div class="stat-label">
+          Ticari fırsat
+        </div>
+
+        <div id="opportunityCount" class="stat-value">
+          —
+        </div>
+      </div>
+
+    </div>
+
+
+    <div id="trendList" class="trend-list">
+
+      <div class="loading">
+        Güncel trend verisi alınıyor...
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- FIRSAT MOTORU -->
+
+  <section id="opportunity" class="section">
+
+    <h2 class="section-title">
+      🎯 Ticari Fırsat Motoru
+    </h2>
+
+    <p class="section-subtitle">
+      Bir ürünün maliyetini, satış fiyatını ve rekabet seviyesini
+      gir. Radar talep skorunu otomatik olarak hesaba katacağız.
+    </p>
+
+
+    <div id="selectedTrend" class="selected">
+
+      Henüz trend seçilmedi.
+      İstersen yukarıdaki trendlerden birine dokun.
+
+    </div>
+
+
+    <div class="form-grid">
+
+      <div class="field">
+
+        <label>Ürün</label>
+
+        <input
+          id="product"
+          type="text"
+          placeholder="Örn. Keten Gömlek"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Maliyet (TL)</label>
+
+        <input
+          id="cost"
+          type="number"
+          min="0"
+          placeholder="350"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Satış fiyatı (TL)</label>
+
+        <input
+          id="sale"
+          type="number"
+          min="0"
+          placeholder="750"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Talep skoru</label>
+
+        <input
+          id="demand"
+          type="number"
+          min="0"
+          max="100"
+          value="50"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>Rekabet</label>
+
+        <select id="competition">
+
+          <option value="Düşük">
+            Düşük rekabet
+          </option>
+
+          <option value="Orta" selected>
+            Orta rekabet
+          </option>
+
+          <option value="Yüksek">
+            Yüksek rekabet
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <button id="calculate" class="button">
+      🚀 Fırsatı Hesapla
+    </button>
+
+
+    <div id="result" class="result"></div>
+
+  </section>
+
+</main>
+
+
+<footer>
+  AI Ticaret Radar · Türkiye
+</footer>
+
+
+<script>
+
+  let trends = [];
+  let visibleTrends = [];
+  let activeFilter = "all";
+
+
+  const trendList =
+    document.getElementById("trendList");
+
+  const search =
+    document.getElementById("search");
+
+  const trendCount =
+    document.getElementById("trendCount");
+
+  const bestScore =
+    document.getElementById("bestScore");
+
+  const opportunityCount =
+    document.getElementById("opportunityCount");
+
+  const statusText =
+    document.getElementById("statusText");
+
+  const selectedTrend =
+    document.getElementById("selectedTrend");
+
+  const demandInput =
+    document.getElementById("demand");
+
+
+  function escapeHtml(value) {
+
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+
+  }
+
+
+  function getScore(item) {
+
+    return Number(item.score) || 0;
+
+  }
+
+
+  function isCommercial(item) {
+
+    return (
+      item.commercial === true ||
+      getScore(item) >= 65
     );
 
-    clearTimeout(timeout);
+  }
 
-    if (!response.ok) {
-      throw new Error(
-        "Google Trends HTTP " + response.status
-      );
+
+  function getLabel(score) {
+
+    if (score >= 85) {
+      return "ÇOK SICAK";
     }
 
-    const xml = await response.text();
-
-    if (!xml || xml.length < 100) {
-      throw new Error(
-        "Google Trends boş veri döndürdü."
-      );
+    if (score >= 70) {
+      return "AKTİF FIRSAT";
     }
 
-    function decodeHtml(value) {
-      return String(value || "")
-        .replace(
-          /<!\[CDATA\[(.*?)\]\]>/gs,
-          "$1"
-        )
-        .replace(/&amp;/g, "&")
-        .replace(/&lt;/g, "<")
-        .replace(/&gt;/g, ">")
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'")
-        .replace(/&#x27;/g, "'")
-        .trim();
+    if (score >= 65) {
+      return "TİCARİ FIRSAT";
     }
 
-    function getTag(block, tag) {
-      const regex = new RegExp(
-        "<" +
-          tag +
-          "[^>]*>([\\s\\S]*?)<\\/" +
-          tag +
-          ">",
-        "i"
-      );
+    return "İZLE";
 
-      const match = block.match(regex);
+  }
 
-      return match
-        ? decodeHtml(match[1])
-        : "";
+
+  function getScoreClass(score) {
+
+    if (score >= 85) {
+      return "hot";
     }
 
-    function getNamespacedTag(block, tag) {
-      const regex = new RegExp(
-        "<(?:[a-zA-Z0-9_-]+:)?" +
-          tag +
-          "[^>]*>([\\s\\S]*?)<\\/(?:[a-zA-Z0-9_-]+:)?" +
-          tag +
-          ">",
-        "i"
+    if (score >= 65) {
+      return "medium";
+    }
+
+    return "low";
+
+  }
+
+
+  function updateStats(list) {
+
+    trendCount.textContent = list.length;
+
+    if (!list.length) {
+
+      bestScore.textContent = "0";
+      opportunityCount.textContent = "0";
+
+      return;
+
+    }
+
+
+    bestScore.textContent =
+      Math.max(
+        ...list.map(item => getScore(item))
       );
 
-      const match = block.match(regex);
 
-      return match
-        ? decodeHtml(match[1])
-        : "";
-    }
-
-    function trafficNumber(value) {
-      const text = String(value || "")
-        .replace(/\./g, "")
-        .replace(/,/g, "")
-        .toLowerCase();
-
-      const match = text.match(/\d+/);
-
-      if (!match) {
-        return 0;
-      }
-
-      return Number(match[0]);
-    }
-
-    function calculateScore(traffic) {
-      const number =
-        trafficNumber(traffic);
-
-      if (number >= 100000) return 95;
-      if (number >= 50000) return 90;
-      if (number >= 20000) return 85;
-      if (number >= 10000) return 80;
-      if (number >= 5000) return 72;
-      if (number >= 2000) return 65;
-      if (number >= 1000) return 58;
-      if (number >= 500) return 50;
-      if (number >= 200) return 42;
-      if (number >= 100) return 35;
-
-      return 30;
-    }
-
-    function detectCategory(trend) {
-      const text =
-        trend.toLocaleLowerCase("tr-TR");
-
-      if (
-        /keten|gömlek|pantolon|şort|elbise|etek|moda|ayakkabı|çanta|mont|ceket|tekstil|kumaş/.test(
-          text
-        )
-      ) {
-        return "Moda / Tekstil";
-      }
-
-      if (
-        /telefon|iphone|samsung|xiaomi|tablet|bilgisayar|airpods|kulaklık|teknoloji|playstation|xbox/.test(
-          text
-        )
-      ) {
-        return "Teknoloji";
-      }
-
-      if (
-        /araba|otomobil|otomotiv|benzin|mazot|yakıt|lastik|motor/.test(
-          text
-        )
-      ) {
-        return "Otomotiv / Yakıt";
-      }
-
-      if (
-        /ev|mobilya|koltuk|masa|sandalye|dekorasyon|mutfak|beyaz eşya/.test(
-          text
-        )
-      ) {
-        return "Ev / Yaşam";
-      }
-
-      if (
-        /market|gıda|kahve|çikolata|restoran|yemek/.test(
-          text
-        )
-      ) {
-        return "Gıda";
-      }
-
-      if (
-        /spor|fitness|forma|futbol|basketbol|koşu/.test(
-          text
-        )
-      ) {
-        return "Spor";
-      }
-
-      if (
-        /tatil|otel|uçak|seyahat|turizm/.test(
-          text
-        )
-      ) {
-        return "Seyahat";
-      }
-
-      if (
-        /telefon|uygulama|yazılım|yapay zeka|ai|internet/.test(
-          text
-        )
-      ) {
-        return "Dijital";
-      }
-
-      return "Genel Trend";
-    }
-
-    function isCommercial(
-      category,
-      score
-    ) {
-      const commercialCategories = [
-        "Moda / Tekstil",
-        "Teknoloji",
-        "Otomotiv / Yakıt",
-        "Ev / Yaşam",
-        "Gıda",
-        "Spor",
-        "Seyahat",
-        "Dijital"
-      ];
-
-      return (
-        commercialCategories.includes(
-          category
-        ) &&
-        score >= 60
-      );
-    }
-
-    function createProductIdea(
-      category,
-      trend
-    ) {
-      if (category === "Moda / Tekstil") {
-        return (
-          trend +
-          " ürünleri, aksesuar veya tekstil"
-        );
-      }
-
-      if (category === "Teknoloji") {
-        return (
-          trend +
-          " aksesuarı veya teknoloji ürünü"
-        );
-      }
-
-      if (
-        category ===
-        "Otomotiv / Yakıt"
-      ) {
-        return (
-          trend +
-          " aksesuarı veya otomotiv ürünü"
-        );
-      }
-
-      if (
-        category === "Ev / Yaşam"
-      ) {
-        return (
-          trend +
-          " odaklı ev ürünü"
-        );
-      }
-
-      if (category === "Gıda") {
-        return (
-          trend +
-          " temalı gıda ürünü"
-        );
-      }
-
-      if (category === "Spor") {
-        return (
-          trend +
-          " spor ürünü veya aksesuar"
-        );
-      }
-
-      if (category === "Seyahat") {
-        return (
-          trend +
-          " seyahat ürünü veya aksesuar"
-        );
-      }
-
-      if (category === "Dijital") {
-        return (
-          trend +
-          " odaklı dijital ürün"
-        );
-      }
-
-      return (
-        trend +
-        " ile ilgili ticari ürün"
-      );
-    }
-
-    const itemBlocks =
-      xml.match(
-        /<item[\s\S]*?<\/item>/gi
-      ) || [];
-
-    const trends = itemBlocks
-      .map((block) => {
-        const trend =
-          getTag(
-            block,
-            "title"
-          );
-
-        const traffic =
-          getNamespacedTag(
-            block,
-            "approx_traffic"
-          );
-
-        if (!trend) {
-          return null;
-        }
-
-        const score =
-          calculateScore(
-            traffic
-          );
-
-        const category =
-          detectCategory(
-            trend
-          );
-
-        const commercial =
-          isCommercial(
-            category,
-            score
-          );
-
-        return {
-          trend,
-          traffic:
-            traffic || "—",
-          score,
-          category,
-          commercial,
-          productIdea:
-            createProductIdea(
-              category,
-              trend
-            )
-        };
-      })
-      .filter(Boolean);
-
-    if (!trends.length) {
-      throw new Error(
-        "Google Trends verisinden trend çıkarılamadı."
-      );
-    }
-
-    trends.sort(
-      (a, b) =>
-        b.score - a.score
-    );
-
-    /*
-      ÖNEMLİ:
-      Burada artık ticari olmayan
-      trendleri SİLMİYORUZ.
-
-      Radar bütün güncel trendleri
-      gösterecek.
-    */
-
-    const finalTrends =
-      trends.slice(0, 20);
-
-    const opportunityCount =
-      finalTrends.filter(
-        (item) =>
-          item.commercial === true ||
-          Number(item.score) >= 60
+    opportunityCount.textContent =
+      list.filter(item =>
+        isCommercial(item)
       ).length;
 
-    return res.status(200).json({
-      success: true,
+  }
 
-      source:
-        "Google Trends",
 
-      country:
-        "TR",
+  function renderTrends(list) {
 
-      updatedAt:
-        new Date().toISOString(),
+    visibleTrends = [...list];
 
-      count:
-        finalTrends.length,
+    updateStats(list);
 
-      opportunityCount,
 
-      trends:
-        finalTrends
+    if (!list.length) {
+
+      trendList.innerHTML = `
+        <div class="loading">
+          Bu filtreye uygun trend bulunamadı.
+        </div>
+      `;
+
+      return;
+
+    }
+
+
+    trendList.innerHTML = list.map(
+      (item, index) => {
+
+        const score = getScore(item);
+
+        const label =
+          getLabel(score);
+
+        const idea =
+          item.productIdea ||
+          item.product_idea ||
+          item.idea ||
+          "Bu trend için ürün fikri analiz edilebilir.";
+
+
+        return `
+
+          <div
+            class="trend"
+            data-index="${index}"
+          >
+
+            <div>
+
+              <div class="trend-name">
+                ${escapeHtml(item.trend)}
+              </div>
+
+
+              <div class="trend-info">
+
+                Arama hacmi:
+                ${escapeHtml(
+                  item.traffic || "—"
+                )}
+
+                ·
+
+                ${escapeHtml(
+                  item.category ||
+                  "İncelenecek"
+                )}
+
+              </div>
+
+
+              <div class="trend-idea">
+
+                💡
+
+                <strong>Ürün fikri:</strong>
+
+                ${escapeHtml(idea)}
+
+              </div>
+
+
+              <span class="badge">
+                ${label}
+              </span>
+
+            </div>
+
+
+            <div class="score ${getScoreClass(score)}">
+
+              ${score}/100
+
+            </div>
+
+          </div>
+
+        `;
+
+      }
+    ).join("");
+
+
+    document
+      .querySelectorAll(".trend")
+      .forEach(card => {
+
+        card.addEventListener(
+          "click",
+          () => {
+
+            const index =
+              Number(card.dataset.index);
+
+            const item =
+              visibleTrends[index];
+
+            if (item) {
+              selectTrend(item);
+            }
+
+          }
+        );
+
+      });
+
+  }
+
+
+  function applyFilters() {
+
+    const query =
+      search.value
+        .trim()
+        .toLocaleLowerCase("tr-TR");
+
+
+    let filtered =
+      trends.filter(item => {
+
+        const text = [
+
+          item.trend,
+          item.category,
+          item.productIdea,
+          item.product_idea,
+          item.idea,
+          item.traffic
+
+        ]
+          .join(" ")
+          .toLocaleLowerCase("tr-TR");
+
+
+        return !query ||
+          text.includes(query);
+
+      });
+
+
+    if (activeFilter === "hot") {
+
+      filtered =
+        filtered.filter(item =>
+          getScore(item) >= 85
+        );
+
+    }
+
+
+    if (activeFilter === "commercial") {
+
+      filtered =
+        filtered.filter(item =>
+          isCommercial(item)
+        );
+
+    }
+
+
+    if (activeFilter === "watch") {
+
+      filtered =
+        filtered.filter(item =>
+          getScore(item) < 65
+        );
+
+    }
+
+
+    renderTrends(filtered);
+
+  }
+
+
+  document
+    .querySelectorAll(".filter")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+
+          document
+            .querySelectorAll(".filter")
+            .forEach(btn =>
+              btn.classList.remove("active")
+            );
+
+
+          button.classList.add("active");
+
+          activeFilter =
+            button.dataset.filter;
+
+          applyFilters();
+
+        }
+      );
+
     });
 
-  } catch (error) {
-    console.error(
-      "RADAR ERROR:",
-      error
+
+  search.addEventListener(
+    "input",
+    applyFilters
+  );
+
+
+  function selectTrend(item) {
+
+    const score =
+      getScore(item);
+
+
+    demandInput.value =
+      score;
+
+
+    selectedTrend.innerHTML = `
+
+      🎯 Seçilen trend:
+
+      <strong>
+        ${escapeHtml(item.trend)}
+      </strong>
+
+      · Radar sinyali:
+
+      <strong>
+        ${score}/100
+      </strong>
+
+      ·
+
+      ${escapeHtml(
+        item.category ||
+        "İncelenecek"
+      )}
+
+    `;
+
+
+    const productInput =
+      document.getElementById("product");
+
+
+    if (!productInput.value.trim()) {
+
+      productInput.value =
+        item.productIdea ||
+        item.product_idea ||
+        item.trend;
+
+    }
+
+
+    document
+      .getElementById("opportunity")
+      .scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+  }
+
+
+  async function loadTrends() {
+
+    statusText.textContent =
+      "Trendler taranıyor...";
+
+
+    trendList.innerHTML = `
+
+      <div class="loading">
+        🔄 Güncel Türkiye trendleri alınıyor...
+      </div>
+
+    `;
+
+
+    try {
+
+      const response =
+        await fetch(
+          "/api/radar?ts=" +
+          Date.now(),
+          {
+            method: "GET",
+            cache: "no-store"
+          }
+        );
+
+
+      if (!response.ok) {
+
+        throw new Error(
+          "Radar API HTTP " +
+          response.status
+        );
+
+      }
+
+
+      const data =
+        await response.json();
+
+
+      if (!data.success) {
+
+        throw new Error(
+          data.message ||
+          data.error ||
+          "Radar verisi alınamadı"
+        );
+
+      }
+
+
+      trends =
+        Array.isArray(data.trends)
+          ? data.trends
+          : [];
+
+
+      renderTrends(trends);
+
+
+      statusText.textContent =
+        "Son tarama: şimdi";
+
+    }
+
+
+    catch (error) {
+
+      console.error(error);
+
+
+      statusText.textContent =
+        "Radar verisi alınamadı";
+
+
+      trendList.innerHTML = `
+
+        <div class="error">
+
+          <strong>
+            Radar bağlantısı kurulamadı.
+          </strong>
+
+          <br><br>
+
+          ${escapeHtml(
+            error.message
+          )}
+
+          <br><br>
+
+          Sayfayı yenileyip tekrar
+          deneyebilirsin.
+
+        </div>
+
+      `;
+
+
+      trendCount.textContent =
+        "0";
+
+      bestScore.textContent =
+        "0";
+
+      opportunityCount.textContent =
+        "0";
+
+    }
+
+  }
+
+
+  document
+    .getElementById("calculate")
+    .addEventListener(
+      "click",
+      calculateOpportunity
     );
 
-    return res.status(500).json({
-      success: false,
 
-      message:
-        "Radar verisi alınamadı.",
+  function calculateOpportunity() {
 
-      error:
-        error?.message ||
-        "Bilinmeyen hata"
+    const product =
+      document
+        .getElementById("product")
+        .value
+        .trim();
+
+
+    const cost =
+      Number(
+        document
+          .getElementById("cost")
+          .value
+      );
+
+
+    const sale =
+      Number(
+        document
+          .getElementById("sale")
+          .value
+      );
+
+
+    const demand =
+      Math.max(
+        0,
+        Math.min(
+          100,
+          Number(demandInput.value) || 0
+        )
+      );
+
+
+    const competition =
+      document
+        .getElementById("competition")
+        .value;
+
+
+    const result =
+      document.getElementById("result");
+
+
+    if (
+      !cost ||
+      !sale ||
+      sale <= cost
+    ) {
+
+      result.style.display =
+        "block";
+
+
+      result.innerHTML = `
+
+        <div class="result-title">
+          KARAR MOTORU
+        </div>
+
+        <div class="decision">
+          🔴 UZAK DUR
+        </div>
+
+        <div class="recommend">
+          Satış fiyatı maliyetten yüksek olmalı.
+        </div>
+
+      `;
+
+
+      result.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+
+
+      return;
+
+    }
+
+
+    const profit =
+      sale - cost;
+
+
+    const margin =
+      (profit / sale) * 100;
+
+
+    let competitionScore =
+      65;
+
+
+    if (competition === "Düşük") {
+      competitionScore = 90;
+    }
+
+
+    if (competition === "Yüksek") {
+      competitionScore = 40;
+    }
+
+
+    const marginScore =
+      Math.min(
+        margin * 2,
+        100
+      );
+
+
+    const opportunityScore =
+      Math.round(
+        demand * 0.40 +
+        marginScore * 0.40 +
+        competitionScore * 0.20
+      );
+
+
+    let decision;
+    let emoji;
+    let advice;
+
+
+    if (opportunityScore >= 80) {
+
+      decision = "AL";
+
+      emoji = "🟢";
+
+      advice =
+        "Güçlü ticari sinyal. Ürün ciddi şekilde değerlendirilebilir.";
+
+    }
+
+    else if (opportunityScore >= 60) {
+
+      decision = "TEST ET";
+
+      emoji = "🟡";
+
+      advice =
+        "Potansiyel var. Önce küçük stokla test etmek daha güvenli.";
+
+    }
+
+    else if (opportunityScore >= 40) {
+
+      decision = "İNCELE";
+
+      emoji = "🟠";
+
+      advice =
+        "Sinyal orta seviyede. Maliyet ve talep tekrar kontrol edilmeli.";
+
+    }
+
+    else {
+
+      decision = "UZAK DUR";
+
+      emoji = "🔴";
+
+      advice =
+        "Risk yüksek. Bu ürüne şu aşamada girme.";
+
+    }
+
+
+    result.style.display =
+      "block";
+
+
+    result.innerHTML = `
+
+      <div class="result-title">
+        🚀 TİCARİ KARAR MOTORU
+      </div>
+
+
+      <div class="decision">
+        ${emoji} ${decision}
+      </div>
+
+
+      <div class="result-score">
+        ${opportunityScore}/100
+      </div>
+
+
+      <div class="recommend">
+
+        <b>
+          ${escapeHtml(
+            product ||
+            "Ürün belirtilmedi"
+          )}
+        </b>
+
+      </div>
+
+
+      <div class="mini-grid">
+
+        <div class="mini-card">
+
+          <span>
+            Birim kâr
+          </span>
+
+          <strong>
+            ${profit.toLocaleString(
+              "tr-TR"
+            )} TL
+          </strong>
+
+        </div>
+
+
+        <div class="mini-card">
+
+          <span>
+            Kâr marjı
+          </span>
+
+          <strong>
+            ${margin.toFixed(1)}%
+          </strong>
+
+        </div>
+
+
+        <div class="mini-card">
+
+          <span>
+            Talep
+          </span>
+
+          <strong>
+            ${demand}/100
+          </strong>
+
+        </div>
+
+      </div>
+
+
+      <div class="recommend">
+
+        <b>Ürün maliyeti:</b>
+        ${cost.toLocaleString(
+          "tr-TR"
+        )} TL
+
+        <br>
+
+        <b>Satış fiyatı:</b>
+        ${sale.toLocaleString(
+          "tr-TR"
+        )} TL
+
+        <br>
+
+        <b>Rekabet:</b>
+        ${escapeHtml(
+          competition
+        )}
+
+        <br><br>
+
+        <b>Karar:</b>
+        ${advice}
+
+      </div>
+
+    `;
+
+
+    result.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
     });
+
   }
-}
+
+
+  loadTrends();
+
+</script>
+
+</body>
+</html>
