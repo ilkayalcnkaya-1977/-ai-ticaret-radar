@@ -23,14 +23,179 @@
   --green2:#15945b;
   --yellow:#ffd66b;
   --red:#ff7272;
+<script>
+let liveTrends = [];
+
+async function loadLiveRadar() {
+  const status = document.getElementById("statusText");
+  const list = document.getElementById("trendList");
+  const count = document.getElementById("trendCount");
+  const best = document.getElementById("bestScore");
+  const opportunities = document.getElementById("opportunityCount");
+
+  try {
+    status.textContent = "Güncel veriler alınıyor...";
+
+    const response = await fetch("/api/radar", {
+      cache: "no-store"
+    });
+
+    if (!response.ok) {
+      throw new Error("Radar API bağlantısı başarısız");
+    }
+
+    const data = await response.json();
+
+    if (!data.success || !Array.isArray(data.trends)) {
+      throw new Error("Geçersiz radar verisi");
+    }
+
+    liveTrends = data.trends;
+
+    count.textContent = liveTrends.length;
+    best.textContent = data.radarScore || 0;
+    opportunities.textContent = data.opportunityCount || 0;
+
+    renderLiveTrends(liveTrends);
+
+    status.textContent = "Radar aktif";
+
+  } catch (error) {
+
+    console.error("LIVE RADAR ERROR:", error);
+
+    status.textContent = "Veri bağlantısı bekleniyor";
+
+    list.innerHTML = `
+      <div class="trend">
+        <h3>⚠️ Güncel veri alınamadı</h3>
+        <p class="meta">
+          Radar bağlantısı geçici olarak kullanılamıyor.
+          Birkaç saniye sonra tekrar deneyin.
+        </p>
+      </div>
+    `;
+  }
 }
 
-body{
-  font-family:Arial,Helvetica,sans-serif;
-  background:var(--bg);
-  color:var(--text);
-  line-height:1.6;
+
+function renderLiveTrends(items) {
+
+  const list = document.getElementById("trendList");
+
+  if (!items.length) {
+    list.innerHTML = `
+      <div class="trend">
+        <h3>Trend bulunamadı</h3>
+        <p class="meta">
+          Şu anda uygun ticari trend bulunamadı.
+        </p>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = items.map((item, index) => {
+
+    let badge = "İNCELE";
+
+    if (item.score >= 80) {
+      badge = "🔥 GÜÇLÜ FIRSAT";
+    } else if (item.score >= 65) {
+      badge = "🟡 TEST ET";
+    } else {
+      badge = "⚪ İNCELENECEK";
+    }
+
+    return `
+      <div class="trend">
+
+        <div class="trend-top">
+
+          <div>
+            <h3>
+              ${index + 1}. ${escapeHtml(item.trend)}
+            </h3>
+
+            <p class="meta">
+              Arama trafiği: ${escapeHtml(item.traffic || "—")}
+            </p>
+
+            <p class="meta">
+              ${escapeHtml(item.category || "İncelenecek")}
+            </p>
+
+            <p class="meta">
+              Ürün fikri: ${escapeHtml(
+                item.productIdea || "Araştırılmalı"
+              )}
+            </p>
+
+            <span class="badge">
+              ${badge}
+            </span>
+          </div>
+
+          <div class="score">
+            ${item.score}/100
+          </div>
+
+        </div>
+
+      </div>
+    `;
+
+  }).join("");
 }
+
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* Arama kutusu artık canlı veriyi arayacak */
+function filterTrends() {
+
+  const search =
+    document
+      .getElementById("trendSearch")
+      .value
+      .toLowerCase()
+      .trim();
+
+  if (!search) {
+    renderLiveTrends(liveTrends);
+    return;
+  }
+
+  const filtered = liveTrends.filter(item =>
+    String(item.trend)
+      .toLowerCase()
+      .includes(search)
+  );
+
+  renderLiveTrends(filtered);
+}
+
+
+/* Sayfa açılır açılmaz canlı radar */
+loadLiveRadar();
+
+
+/* Her 5 dakikada bir güncelle */
+setInterval(loadLiveRadar, 5 * 60 * 1000);
+
+</script>
+
+
+
 
 header{
   position:sticky;
