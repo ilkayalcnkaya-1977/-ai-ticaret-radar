@@ -2,12 +2,22 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<meta name="description" content="AI Ticaret Radar">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<meta
+  name="description"
+  content="AI Ticaret Radar - Türkiye ticaret fırsatlarını analiz eden akıllı radar."
+>
+
 <title>AI Ticaret Radar</title>
 
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+
+*{
+  box-sizing:border-box;
+  margin:0;
+  padding:0;
+}
 
 body{
   font-family:Arial,sans-serif;
@@ -15,29 +25,47 @@ body{
   color:#fff;
 }
 
-.app{
-  min-height:100vh;
-  background:
-  radial-gradient(circle at 85% 0,#16456d 0,transparent 35%),
-  #07111f;
+button,
+input,
+select{
+  font:inherit;
 }
 
+.app{
+  min-height:100vh;
+
+  background:
+    radial-gradient(
+      circle at 85% 0,
+      #16456d 0,
+      transparent 35%
+    ),
+    #07111f;
+}
+
+/* HEADER */
+
 header{
-  height:70px;
+  height:72px;
   padding:0 6%;
+
   display:flex;
   align-items:center;
   justify-content:space-between;
+
   border-bottom:1px solid #20344b;
+
   background:#07111f;
+
   position:sticky;
   top:0;
-  z-index:10;
+  z-index:20;
 }
 
 .logo{
-  font-size:19px;
-  font-weight:800;
+  font-size:20px;
+  font-weight:900;
+  letter-spacing:-.5px;
 }
 
 .logo span{
@@ -46,74 +74,118 @@ header{
 
 .status{
   color:#9aafc3;
-  font-size:13px;
+  font-size:14px;
 }
 
 .dot{
   display:inline-block;
-  width:8px;
-  height:8px;
+
+  width:9px;
+  height:9px;
+
   background:#58d68d;
+
   border-radius:50%;
-  margin-right:7px;
+
+  margin-right:8px;
+
+  box-shadow:
+    0 0 12px rgba(88,214,141,.7);
 }
 
-.hero,.content,footer{
+/* HERO */
+
+.hero,
+.content,
+footer{
+  width:100%;
   max-width:1150px;
+
   margin:auto;
+
   padding-left:6%;
   padding-right:6%;
 }
 
 .hero{
-  padding-top:60px;
-  padding-bottom:30px;
+  padding-top:70px;
+  padding-bottom:35px;
 }
 
 .eyebrow{
   color:#58d68d;
+
   font-size:12px;
-  font-weight:800;
-  letter-spacing:2px;
+  font-weight:900;
+
+  letter-spacing:2.5px;
+
   text-transform:uppercase;
 }
 
 .hero h1{
-  font-size:clamp(40px,7vw,74px);
-  line-height:.98;
-  letter-spacing:-3px;
-  margin:15px 0 20px;
+  max-width:850px;
+
+  font-size:clamp(
+    42px,
+    7vw,
+    76px
+  );
+
+  line-height:.96;
+
+  letter-spacing:-4px;
+
+  margin:18px 0 22px;
 }
 
 .hero p{
-  max-width:700px;
+  max-width:720px;
+
   color:#9eb0c4;
-  font-size:18px;
-  line-height:1.6;
+
+  font-size:19px;
+
+  line-height:1.65;
 }
+
+/* CONTENT */
 
 .content{
   padding-top:20px;
-  padding-bottom:60px;
+  padding-bottom:70px;
 }
 
 .grid{
   display:grid;
-  grid-template-columns:1.35fr .65fr;
+
+  grid-template-columns:
+    minmax(0,1.35fr)
+    minmax(300px,.65fr);
+
   gap:18px;
 }
 
 .card{
   background:#0c1a2a;
+
   border:1px solid #20364e;
-  border-radius:20px;
-  padding:24px;
+
+  border-radius:22px;
+
+  padding:25px;
+
+  box-shadow:
+    0 15px 45px rgba(0,0,0,.12);
 }
 
 .card h2{
-  font-size:18px;
-  margin-bottom:18px;
+  font-size:20px;
+
+  margin-bottom:20px;
 }
+
+/* TRENDLER */
 
 .opportunities{
   display:grid;
@@ -121,69 +193,129 @@ header{
 }
 
 .opportunity{
-  padding:16px;
-  border-radius:14px;
+  padding:17px;
+
+  border-radius:15px;
+
   background:#091624;
+
   border:1px solid #20364e;
+
+  transition:
+    transform .2s ease,
+    border-color .2s ease;
+}
+
+.opportunity:hover{
+  transform:translateY(-2px);
+
+  border-color:#35617e;
 }
 
 .topline{
   display:flex;
+
   justify-content:space-between;
+
   align-items:center;
+
   gap:12px;
 }
 
 .product{
+  min-width:0;
+
   font-weight:800;
+
   font-size:16px;
+
+  line-height:1.35;
 }
 
 .details{
   color:#8196ab;
+
   font-size:13px;
-  line-height:1.5;
-  margin-top:6px;
+
+  line-height:1.6;
+
+  margin-top:7px;
 }
 
 .badge{
+  flex-shrink:0;
+
   background:#123d2d;
+
   color:#72e6a3;
-  padding:7px 10px;
+
+  padding:8px 11px;
+
   border-radius:999px;
+
   font-size:12px;
-  font-weight:800;
+
+  font-weight:900;
+
   white-space:nowrap;
 }
 
+.loading{
+  padding:35px 20px;
+
+  text-align:center;
+
+  color:#8196ab;
+}
+
+/* RADAR SCORE */
+
 .big-score{
-  font-size:64px;
-  font-weight:800;
+  font-size:72px;
+
+  line-height:1;
+
+  font-weight:900;
+
   color:#58d68d;
+
+  margin-bottom:10px;
 }
 
 .muted{
   color:#8196ab;
+
   font-size:13px;
+
+  line-height:1.5;
 }
 
 .metrics{
   display:grid;
-  grid-template-columns:1fr 1fr;
+
+  grid-template-columns:
+    1fr 1fr;
+
   gap:12px;
+
   margin-top:22px;
 }
 
 .metric{
   background:#091624;
+
   border:1px solid #1c3147;
-  border-radius:14px;
-  padding:15px;
+
+  border-radius:15px;
+
+  padding:17px;
 }
 
 .metric strong{
   display:block;
-  font-size:21px;
+
+  font-size:23px;
+
   margin-top:7px;
 }
 
@@ -191,35 +323,63 @@ header{
   color:#58d68d;
 }
 
+/* BUTTON */
+
 .scan{
   margin-top:20px;
+
   width:100%;
+
   border:0;
-  border-radius:11px;
-  padding:13px 16px;
+
+  border-radius:12px;
+
+  padding:15px 18px;
+
   background:#58d68d;
+
   color:#06130c;
-  font-weight:800;
+
+  font-weight:900;
+
   cursor:pointer;
+
+  transition:
+    transform .15s ease,
+    opacity .15s ease;
+}
+
+.scan:hover{
+  transform:translateY(-1px);
 }
 
 .scan:disabled{
-  opacity:.6;
+  opacity:.55;
+
+  cursor:wait;
 }
 
-.loading{
-  padding:25px;
-  text-align:center;
-  color:#8196ab;
-}
+/* ERROR */
 
 .error{
-  padding:18px;
+  margin-top:12px;
+
+  padding:16px;
+
   border-radius:12px;
+
   background:#30191d;
+
   color:#ff9da5;
+
+  font-size:13px;
+
+  line-height:1.5;
+
   display:none;
 }
+
+/* SECTIONS */
 
 .section{
   margin-top:18px;
@@ -227,68 +387,218 @@ header{
 
 .section-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
+
+  grid-template-columns:
+    1fr 1fr;
+
   gap:18px;
 }
 
+/* FORM */
+
 .form-grid{
   display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:14px;
 }
 
 .field label{
   display:block;
+
   color:#9aafc3;
-  font-size:12px;
-  margin-bottom:7px;
+
+  font-size:13px;
+
+  margin-bottom:8px;
 }
 
-.field input,.field select{
+.field input,
+.field select{
   width:100%;
+
   background:#071421;
+
   border:1px solid #294158;
+
   color:#fff;
-  padding:12px;
-  border-radius:10px;
+
+  padding:14px;
+
+  border-radius:11px;
+
+  outline:none;
+}
+
+.field input:focus,
+.field select:focus{
+  border-color:#58d68d;
+
+  box-shadow:
+    0 0 0 2px
+    rgba(88,214,141,.1);
 }
 
 .calculate{
-  margin-top:15px;
+  margin-top:16px;
+
   border:0;
-  border-radius:11px;
-  padding:13px 16px;
+
+  border-radius:12px;
+
+  padding:14px 18px;
+
   background:#fff;
+
   color:#07111f;
-  font-weight:800;
+
+  font-weight:900;
+
+  cursor:pointer;
 }
+
+.calculate:disabled{
+  opacity:.55;
+
+  cursor:wait;
+}
+
+/* RESULT */
 
 .result{
   display:none;
-  margin-top:16px;
-  padding:16px;
-  border-radius:12px;
+
+  margin-top:17px;
+
+  padding:18px;
+
+  border-radius:14px;
+
   background:#091624;
+
   border:1px solid #20364e;
 }
 
-.result strong{
-  font-size:28px;
+.result-title{
+  color:#9aafc3;
+
+  font-size:13px;
+
+  margin-bottom:5px;
+}
+
+.result-score{
+  font-size:38px;
+
+  font-weight:900;
+
   color:#58d68d;
 }
+
+.result-main{
+  margin-top:8px;
+
+  color:#dce7f2;
+
+  font-size:14px;
+
+  line-height:1.6;
+}
+
+/* RADAR MANTIĞI */
+
+.logic-item{
+  margin-bottom:22px;
+}
+
+.logic-item:last-child{
+  margin-bottom:0;
+}
+
+.logic-item strong{
+  display:block;
+
+  color:#9aafc3;
+
+  font-size:15px;
+
+  margin-bottom:5px;
+}
+
+.logic-item span{
+  color:#8196ab;
+
+  font-size:14px;
+
+  line-height:1.6;
+}
+
+/* NIGHT */
 
 .night{
   margin-top:18px;
 }
 
-footer{
-  padding-bottom:30px;
-  color:#60778e;
-  font-size:12px;
+.night-box{
+  margin-top:18px;
+
+  display:grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap:12px;
 }
 
+/* FOOTER */
+
+footer{
+  padding-bottom:35px;
+
+  color:#60778e;
+
+  font-size:12px;
+
+  line-height:1.6;
+}
+
+/* MOBILE */
+
 @media(max-width:800px){
-  .grid,.section-grid{
+
+  header{
+    height:68px;
+
+    padding-left:5%;
+    padding-right:5%;
+  }
+
+  .logo{
+    font-size:17px;
+  }
+
+  .status{
+    font-size:12px;
+  }
+
+  .hero{
+    padding-top:50px;
+  }
+
+  .hero h1{
+    font-size:48px;
+
+    letter-spacing:-2.5px;
+  }
+
+  .hero p{
+    font-size:17px;
+  }
+
+  .grid,
+  .section-grid{
     grid-template-columns:1fr;
   }
 
@@ -296,10 +606,39 @@ footer{
     grid-template-columns:1fr;
   }
 
-  .hero h1{
-    letter-spacing:-2px;
+  .card{
+    padding:21px;
+
+    border-radius:19px;
   }
+
+  .topline{
+    align-items:flex-start;
+  }
+
+  .product{
+    font-size:15px;
+  }
+
+  .big-score{
+    font-size:60px;
+  }
+
 }
+
+@media(max-width:420px){
+
+  .hero h1{
+    font-size:42px;
+  }
+
+  .metrics,
+  .night-box{
+    grid-template-columns:1fr;
+  }
+
+}
+
 </style>
 </head>
 
@@ -308,15 +647,20 @@ footer{
 <div class="app">
 
 <header>
+
   <div class="logo">
     AI <span>TİCARET RADAR</span>
   </div>
 
   <div class="status">
     <span class="dot"></span>
-    <span id="status">Radar aktif</span>
+    <span id="status">
+      Radar aktif
+    </span>
   </div>
+
 </header>
+
 
 <section class="hero">
 
@@ -330,176 +674,371 @@ footer{
   </h1>
 
   <p>
-    Türkiye'deki gerçek arama trendlerini tarıyor,
-    ticari açıdan anlamlı sinyalleri öne çıkarıyor.
+    Türkiye'deki güncel arama trendlerini
+    tarıyor, ticari açıdan anlamlı sinyalleri
+    analiz ederek fırsatları öne çıkarıyor.
   </p>
 
 </section>
 
+
 <main class="content">
+
+
+<!-- RADAR -->
 
 <div class="grid">
 
-<div class="card">
 
-<h2>🔥 Canlı Trend Sinyalleri</h2>
+  <div class="card">
 
-<div id="opportunities" class="opportunities">
-  <div class="loading">
-    Gerçek trendler taranıyor...
+    <h2>
+      🔥 Canlı Trend Sinyalleri
+    </h2>
+
+    <div
+      id="opportunities"
+      class="opportunities"
+    >
+
+      <div class="loading">
+        Türkiye trendleri taranıyor...
+      </div>
+
+    </div>
+
+    <div
+      id="error"
+      class="error"
+    ></div>
+
   </div>
+
+
+  <div class="card">
+
+    <h2>
+      📡 Radar Skoru
+    </h2>
+
+    <div
+      class="big-score"
+      id="score"
+    >
+      —
+    </div>
+
+    <div class="muted">
+      Canlı trendlerden hesaplanan
+      genel ticari sinyal.
+    </div>
+
+
+    <div class="metrics">
+
+      <div class="metric">
+
+        <div class="muted">
+          Trend adedi
+        </div>
+
+        <strong id="trendCount">
+          —
+        </strong>
+
+      </div>
+
+
+      <div class="metric">
+
+        <div class="muted">
+          En güçlü sinyal
+        </div>
+
+        <strong id="bestScore">
+          —
+        </strong>
+
+      </div>
+
+    </div>
+
+
+    <button
+      class="scan"
+      id="scanButton"
+      onclick="loadRadar()"
+    >
+      Radar Tara
+    </button>
+
+  </div>
+
 </div>
 
-<div id="error" class="error"></div>
 
-</div>
-
-
-<div class="card">
-
-<h2>📡 Radar Skoru</h2>
-
-<div class="big-score" id="score">—</div>
-
-<div class="muted">
-  Canlı trendlerden hesaplanan genel sinyal
-</div>
-
-<div class="metrics">
-
-<div class="metric">
-<div class="muted">Trend adedi</div>
-<strong id="trendCount">—</strong>
-</div>
-
-<div class="metric">
-<div class="muted">En güçlü sinyal</div>
-<strong id="bestScore">—</strong>
-</div>
-
-</div>
-
-<button class="scan" id="scanButton" onclick="loadRadar()">
-Radar Tara
-</button>
-
-</div>
-
-</div>
-
+<!-- FIRSAT HESAPLA -->
 
 <div class="section section-grid">
 
-<div class="card">
 
-<h2>🧮 Fırsat Hesapla</h2>
+  <div class="card">
 
-<div class="form-grid">
+    <h2>
+      🧮 Fırsat Hesapla
+    </h2>
 
-<div class="field">
-<label>Ürün maliyeti (TL)</label>
-<input id="cost" type="number" placeholder="350">
+
+    <div class="form-grid">
+
+
+      <div class="field">
+
+        <label>
+          Ürün maliyeti (TL)
+        </label>
+
+        <input
+          id="cost"
+          type="number"
+          min="0"
+          placeholder="350"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Satış fiyatı (TL)
+        </label>
+
+        <input
+          id="price"
+          type="number"
+          min="0"
+          placeholder="750"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Talep skoru
+        </label>
+
+        <input
+          id="demand"
+          type="number"
+          value="75"
+          min="0"
+          max="100"
+        >
+
+      </div>
+
+
+      <div class="field">
+
+        <label>
+          Rekabet
+        </label>
+
+        <select id="competition">
+
+          <option value="90">
+            Düşük
+          </option>
+
+          <option
+            value="65"
+            selected
+          >
+            Orta
+          </option>
+
+          <option value="35">
+            Yüksek
+          </option>
+
+        </select>
+
+      </div>
+
+    </div>
+
+
+    <button
+      class="calculate"
+      id="calculateButton"
+      onclick="calculateOpportunity()"
+    >
+      Fırsatı Hesapla
+    </button>
+
+
+    <div
+      class="result"
+      id="result"
+    >
+
+      <div class="result-title">
+        Fırsat skoru
+      </div>
+
+      <div
+        class="result-score"
+        id="resultScore"
+      >
+        —
+      </div>
+
+      <div
+        class="result-main"
+        id="resultText"
+      ></div>
+
+    </div>
+
+  </div>
+
+
+  <!-- RADAR MANTIĞI -->
+
+  <div class="card">
+
+    <h2>
+      ⚙️ Radar Mantığı
+    </h2>
+
+
+    <div class="logic-item">
+
+      <strong>
+        1. Gerçek veri
+      </strong>
+
+      <span>
+        Türkiye'deki güncel arama
+        trendleri alınır.
+      </span>
+
+    </div>
+
+
+    <div class="logic-item">
+
+      <strong>
+        2. Ticari filtre
+      </strong>
+
+      <span>
+        Haber, spor ve kişi aramaları
+        ile ticari ürün sinyalleri
+        birbirinden ayrıştırılır.
+      </span>
+
+    </div>
+
+
+    <div class="logic-item">
+
+      <strong>
+        3. Fırsat skoru
+      </strong>
+
+      <span>
+        Trend gücü, talep ve rekabet
+        birlikte değerlendirilir.
+      </span>
+
+    </div>
+
+
+    <div class="logic-item">
+
+      <strong>
+        4. Gece taraması
+      </strong>
+
+      <span>
+        Sistem gece otomatik olarak
+        yeniden kontrol edilir.
+      </span>
+
+    </div>
+
+  </div>
+
 </div>
 
-<div class="field">
-<label>Satış fiyatı (TL)</label>
-<input id="price" type="number" placeholder="750">
-</div>
 
-<div class="field">
-<label>Talep skoru</label>
-<input id="demand" type="number" value="75" min="0" max="100">
-</div>
-
-<div class="field">
-<label>Rekabet</label>
-<select id="competition">
-<option value="90">Düşük</option>
-<option value="65" selected>Orta</option>
-<option value="35">Yüksek</option>
-</select>
-</div>
-
-</div>
-
-<button class="calculate" onclick="calculateOpportunity()">
-Fırsatı Hesapla
-</button>
-
-<div class="result" id="result">
-
-<div>
-Fırsat skoru:
-<strong id="resultScore">—</strong>
-</div>
-
-<div class="details" id="resultText"></div>
-
-</div>
-
-</div>
-
-
-<div class="card">
-
-<h2>⚙️ Radar Mantığı</h2>
-
-<div class="details">
-
-<strong>1. Gerçek veri</strong><br>
-Türkiye'deki güncel Google arama trendleri alınır.
-
-<br><br>
-
-<strong>2. Ticari filtre</strong><br>
-Haber, spor ve kişi aramaları ile ürün/ticaret sinyalleri ayrıştırılır.
-
-<br><br>
-
-<strong>3. Fırsat skoru</strong><br>
-Trend gücü ve ticari uygunluk birlikte değerlendirilir.
-
-<br><br>
-
-<strong>4. Gece taraması</strong><br>
-Sistem gece otomatik olarak yeniden kontrol edilir.
-
-</div>
-
-</div>
-
-</div>
-
+<!-- GECE MODU -->
 
 <div class="card night">
 
-<h2>🌙 Gece Modu</h2>
+  <h2>
+    🌙 Gece Modu
+  </h2>
 
-<div class="details">
-Otomatik gece taraması aktif.
-Önemli yeni sinyaller raporlanacak.
+  <div class="details">
+
+    Otomatik gece taraması aktif.
+    Önemli yeni ticari sinyaller
+    raporlanacak.
+
+  </div>
+
+
+  <div class="night-box">
+
+
+    <div class="metric">
+
+      <div class="muted">
+        Durum
+      </div>
+
+      <strong class="green">
+        AKTİF
+      </strong>
+
+    </div>
+
+
+    <div class="metric">
+
+      <div class="muted">
+        Veri kaynağı
+      </div>
+
+      <strong>
+        TR
+      </strong>
+
+    </div>
+
+
+  </div>
+
 </div>
 
-<div class="metrics">
-
-<div class="metric">
-<div class="muted">Durum</div>
-<strong class="green">AKTİF</strong>
-</div>
-
-<div class="metric">
-<div class="muted">Veri kaynağı</div>
-<strong>TR</strong>
-</div>
-
-</div>
-
-</div>
 
 </main>
 
+
 <footer>
-AI Ticaret Radar · v0.3 · Trend verisi ticari başarı veya kâr garantisi değildir.
+
+AI Ticaret Radar · v0.4
+
+<br>
+
+Trend verisi ticari başarı veya
+kâr garantisi değildir.
+
 </footer>
 
 </div>
@@ -507,7 +1046,12 @@ AI Ticaret Radar · v0.3 · Trend verisi ticari başarı veya kâr garantisi de�
 
 <script>
 
+/* =========================================
+   TİCARİ KELİMELER
+========================================= */
+
 const commercialWords = [
+
   "ürün",
   "fiyat",
   "indirim",
@@ -538,9 +1082,16 @@ const commercialWords = [
   "araba",
   "otomobil",
   "elektronik"
+
 ];
 
+
+/* =========================================
+   GÜRÜLTÜ KELİMELERİ
+========================================= */
+
 const noiseWords = [
+
   "maç",
   "puan",
   "futbol",
@@ -555,66 +1106,112 @@ const noiseWords = [
   "yangın",
   "deprem",
   "hava durumu"
+
 ];
 
 
+/* =========================================
+   TEMİZLE
+========================================= */
+
 function cleanText(text){
 
-  return text
+  return String(text || "")
     .toLowerCase()
     .trim();
 
 }
 
 
+/* =========================================
+   TİCARİ SKOR
+========================================= */
+
 function commercialScore(trend){
 
-  const text=cleanText(trend.trend);
+  const text =
+    cleanText(trend.trend);
 
-  let score=Number(trend.score)||50;
+  let score =
+    Number(trend.score) || 50;
 
-  const hasCommercial=
-    commercialWords.some(word=>text.includes(word));
 
-  const hasNoise=
-    noiseWords.some(word=>text.includes(word));
+  const hasCommercial =
+    commercialWords.some(
+      word => text.includes(word)
+    );
+
+
+  const hasNoise =
+    noiseWords.some(
+      word => text.includes(word)
+    );
+
 
   if(hasCommercial){
-    score+=12;
+
+    score += 12;
+
   }
+
 
   if(hasNoise){
-    score-=28;
+
+    score -= 28;
+
   }
 
-  return Math.max(0,Math.min(100,score));
+
+  return Math.max(
+    0,
+    Math.min(
+      100,
+      score
+    )
+  );
+
 }
 
 
+/* =========================================
+   ÜRÜN FİKRİ
+========================================= */
+
 function productIdea(trend){
 
-  const text=cleanText(trend.trend);
+  const text =
+    cleanText(trend.trend);
+
 
   if(
     text.includes("kahve") ||
     text.includes("coffee")
   ){
+
     return "Kahve / kahve ekipmanı";
+
   }
+
 
   if(
     text.includes("iphone") ||
     text.includes("telefon") ||
     text.includes("samsung")
   ){
+
     return "Telefon aksesuarları";
+
   }
+
 
   if(
     text.includes("ayakkabı")
   ){
+
     return "Ayakkabı / aksesuar";
+
   }
+
 
   if(
     text.includes("gömlek") ||
@@ -622,262 +1219,574 @@ function productIdea(trend){
     text.includes("şort") ||
     text.includes("elbise")
   ){
+
     return "Moda ürünü";
+
   }
+
 
   if(
     text.includes("ev") ||
     text.includes("mobilya")
   ){
+
     return "Ev yaşam ürünleri";
+
   }
+
 
   if(
     text.includes("parfüm") ||
     text.includes("kozmetik")
   ){
+
     return "Kozmetik / bakım";
+
   }
+
 
   return "İncelenecek ticari kategori";
-}
-
-
-function renderTrends(data){
-
-  const container=
-    document.getElementById("opportunities");
-
-  const error=
-    document.getElementById("error");
-
-  error.style.display="none";
-
-  const trends=
-    (data.trends||[])
-    .map(item=>({
-      ...item,
-      commercialScore:commercialScore(item)
-    }))
-    .sort(
-      (a,b)=>b.commercialScore-a.commercialScore
-    );
-
-  const top=trends.slice(0,5);
-
-  if(!top.length){
-
-    container.innerHTML=
-      '<div class="loading">Trend bulunamadı.</div>';
-
-    return;
-  }
-
-  container.innerHTML=
-    top.map(item=>{
-
-      const idea=productIdea(item);
-
-      return `
-      <div class="opportunity">
-
-        <div class="topline">
-
-          <div class="product">
-            ${escapeHtml(item.trend)}
-          </div>
-
-          <div class="badge">
-            ${item.commercialScore}/100
-          </div>
-
-        </div>
-
-        <div class="details">
-          Arama hacmi: ${escapeHtml(item.traffic)}
-          · Ticari aday: ${escapeHtml(idea)}
-        </div>
-
-      </div>
-      `;
-
-    }).join("");
-
-
-  const scores=
-    top.map(x=>x.commercialScore);
-
-  const average=
-    Math.round(
-      scores.reduce((a,b)=>a+b,0)/scores.length
-    );
-
-  document.getElementById("score")
-    .innerText=average;
-
-  document.getElementById("trendCount")
-    .innerText=data.count||top.length;
-
-  document.getElementById("bestScore")
-    .innerText=Math.max(...scores);
 
 }
 
+
+/* =========================================
+   HTML GÜVENLİĞİ
+========================================= */
 
 function escapeHtml(value){
 
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&","&amp;")
     .replaceAll("<","&lt;")
     .replaceAll(">","&gt;")
     .replaceAll('"',"&quot;")
     .replaceAll("'","&#039;");
+
 }
 
+
+/* =========================================
+   TRENDLERİ EKRANA BAS
+========================================= */
+
+function renderTrends(data){
+
+  const container =
+    document.getElementById(
+      "opportunities"
+    );
+
+
+  const error =
+    document.getElementById(
+      "error"
+    );
+
+
+  error.style.display =
+    "none";
+
+
+  const trends =
+    (data.trends || [])
+
+      .map(item => ({
+
+        ...item,
+
+        commercialScore:
+          commercialScore(item)
+
+      }))
+
+      .sort(
+        (a,b) =>
+          b.commercialScore -
+          a.commercialScore
+      );
+
+
+  const top =
+    trends.slice(0,5);
+
+
+  if(!top.length){
+
+    container.innerHTML =
+      '<div class="loading">' +
+      'Trend bulunamadı.' +
+      '</div>';
+
+    return;
+
+  }
+
+
+  container.innerHTML =
+
+    top.map(item => {
+
+      const idea =
+        productIdea(item);
+
+
+      return `
+
+        <div class="opportunity">
+
+          <div class="topline">
+
+            <div class="product">
+              ${escapeHtml(
+                item.trend
+              )}
+            </div>
+
+            <div class="badge">
+              ${item.commercialScore}/100
+            </div>
+
+          </div>
+
+          <div class="details">
+
+            Arama hacmi:
+            ${escapeHtml(
+              item.traffic
+            )}
+
+            · Ticari aday:
+            ${escapeHtml(
+              idea
+            )}
+
+          </div>
+
+        </div>
+
+      `;
+
+    }).join("");
+
+
+  const scores =
+    top.map(
+      item =>
+        item.commercialScore
+    );
+
+
+  const average =
+    Math.round(
+
+      scores.reduce(
+        (a,b) => a+b,
+        0
+      )
+      /
+      scores.length
+
+    );
+
+
+  document.getElementById(
+    "score"
+  ).innerText =
+    average;
+
+
+  document.getElementById(
+    "trendCount"
+  ).innerText =
+    data.count ||
+    trends.length;
+
+
+  document.getElementById(
+    "bestScore"
+  ).innerText =
+    Math.max(...scores);
+
+}
+
+
+/* =========================================
+   RADAR TARAMA
+========================================= */
 
 async function loadRadar(){
 
-  const button=
-    document.getElementById("scanButton");
+  const button =
+    document.getElementById(
+      "scanButton"
+    );
 
-  const status=
-    document.getElementById("status");
 
-  const container=
-    document.getElementById("opportunities");
+  const status =
+    document.getElementById(
+      "status"
+    );
 
-  const error=
-    document.getElementById("error");
 
-  button.disabled=true;
-  button.innerText="Taranıyor...";
-  status.innerText="Veri alınıyor...";
+  const container =
+    document.getElementById(
+      "opportunities"
+    );
 
-  container.innerHTML=
-    '<div class="loading">Türkiye trendleri taranıyor...</div>';
 
-  error.style.display="none";
+  const error =
+    document.getElementById(
+      "error"
+    );
+
+
+  button.disabled =
+    true;
+
+
+  button.innerText =
+    "Taranıyor...";
+
+
+  status.innerText =
+    "Veri alınıyor...";
+
+
+  container.innerHTML =
+    '<div class="loading">' +
+    'Türkiye trendleri taranıyor...' +
+    '</div>';
+
+
+  error.style.display =
+    "none";
+
 
   try{
 
-    const response=
-      await fetch("/api/radar?refresh="+Date.now());
+    const response =
+      await fetch(
+        "/api/radar?refresh=" +
+        Date.now()
+      );
+
 
     if(!response.ok){
+
       throw new Error(
         "Radar API yanıt vermedi."
       );
+
     }
 
-    const data=
+
+    const data =
       await response.json();
 
+
     if(!data.success){
+
       throw new Error(
-        data.error||"Trend verisi alınamadı."
+        data.error ||
+        "Trend verisi alınamadı."
       );
+
     }
+
 
     renderTrends(data);
 
-    status.innerText=
+
+    status.innerText =
       "Son tarama: şimdi";
 
-    button.innerText=
+
+    button.innerText =
       "Tarama tamamlandı ✓";
 
   }
+
   catch(errorObject){
 
-    console.error(errorObject);
+    console.error(
+      errorObject
+    );
 
-    error.innerText=
-      "Radar bağlantısında sorun oluştu: "+
+
+    error.innerText =
+      "Radar bağlantısında sorun oluştu: " +
       errorObject.message;
 
-    error.style.display="block";
 
-    container.innerHTML="";
+    error.style.display =
+      "block";
 
-    status.innerText="Bağlantı hatası";
 
-    button.innerText="Tekrar Dene";
+    container.innerHTML =
+      "";
+
+
+    status.innerText =
+      "Bağlantı hatası";
+
+
+    button.innerText =
+      "Tekrar Dene";
 
   }
+
   finally{
 
-    setTimeout(()=>{
+    setTimeout(() => {
 
-      button.disabled=false;
+      button.disabled =
+        false;
 
-      if(button.innerText!=="Tekrar Dene"){
-        button.innerText="Radar Tara";
+
+      if(
+        button.innerText !==
+        "Tekrar Dene"
+      ){
+
+        button.innerText =
+          "Radar Tara";
+
       }
 
-    },1800);
+    },1500);
 
   }
 
 }
 
 
-function calculateOpportunity(){
+/* =========================================
+   FIRSAT HESAPLA
+========================================= */
 
-  const cost=
-    Number(document.getElementById("cost").value);
+async function calculateOpportunity(){
 
-  const price=
-    Number(document.getElementById("price").value);
-
-  const demand=
-    Math.max(
-      0,
-      Math.min(
-        100,
-        Number(document.getElementById("demand").value)||0
-      )
-    );
-
-  const competition=
+  const cost =
     Number(
-      document.getElementById("competition").value
+      document.getElementById(
+        "cost"
+      ).value
     );
 
-  if(!cost || !price || price<=cost){
+
+  const price =
+    Number(
+      document.getElementById(
+        "price"
+      ).value
+    );
+
+
+  const demand =
+    Math.max(
+
+      0,
+
+      Math.min(
+
+        100,
+
+        Number(
+          document.getElementById(
+            "demand"
+          ).value
+        ) || 0
+
+      )
+
+    );
+
+
+  const competitionValue =
+    Number(
+      document.getElementById(
+        "competition"
+      ).value
+    );
+
+
+  const competition =
+    competitionValue === 90
+      ? "Düşük"
+      : competitionValue === 35
+        ? "Yüksek"
+        : "Orta";
+
+
+  const result =
+    document.getElementById(
+      "result"
+    );
+
+
+  const resultScore =
+    document.getElementById(
+      "resultScore"
+    );
+
+
+  const resultText =
+    document.getElementById(
+      "resultText"
+    );
+
+
+  const button =
+    document.getElementById(
+      "calculateButton"
+    );
+
+
+  if(
+    !cost ||
+    !price ||
+    cost < 0 ||
+    price <= cost
+  ){
 
     alert(
-      "Maliyet ve satış fiyatını doğru gir."
+      "Maliyet ve satış fiyatını doğru gir. Satış fiyatı maliyetten yüksek olmalı."
     );
 
     return;
+
   }
 
-  const margin=
-    ((price-cost)/price)*100;
 
-  const marginScore=
-    Math.min(100,margin*2);
+  result.style.display =
+    "block";
 
-  const score=
-    Math.round(
-      demand*0.45+
-      competition*0.25+
-      marginScore*0.30
+
+  resultScore.innerText =
+    "…";
+
+
+  resultText.innerText =
+    "Fırsat motoru hesaplıyor...";
+
+
+  button.disabled =
+    true;
+
+
+  button.innerText =
+    "Hesaplanıyor...";
+
+
+  try{
+
+    const params =
+      new URLSearchParams({
+
+        cost:
+          String(cost),
+
+        sale:
+          String(price),
+
+        demand:
+          String(demand),
+
+        competition:
+          competition
+
+      });
+
+
+    const response =
+      await fetch(
+        "/api/opportunity?" +
+        params.toString()
+      );
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "Fırsat API yanıt vermedi."
+      );
+
+    }
+
+
+    const data =
+      await response.json();
+
+
+    if(!data.success){
+
+      throw new Error(
+        data.error ||
+        "Fırsat hesaplanamadı."
+      );
+
+    }
+
+
+    resultScore.innerText =
+      String(
+        data.firsatSkoru
+      ) +
+      "/100";
+
+
+    resultText.innerText =
+
+      "Brüt kâr: " +
+      data.brutKar +
+      " TL" +
+
+      " · Marj: %" +
+      data.marj +
+
+      " · Rekabet: " +
+      data.rekabet +
+
+      " · Karar: " +
+      data.karar;
+
+
+  }
+
+  catch(errorObject){
+
+    console.error(
+      errorObject
     );
 
-  document.getElementById("resultScore")
-    .innerText=score+"/100";
 
-  document.getElementById("resultText")
-    .innerText=
-      "Tahmini brüt marj: %"+
-      margin.toFixed(1)+
-      " · Bu skor yalnızca ön değerlendirme sinyalidir.";
+    resultScore.innerText =
+      "Hata";
 
-  document.getElementById("result")
-    .style.display="block";
+
+    resultText.innerText =
+      errorObject.message;
+
+  }
+
+  finally{
+
+    button.disabled =
+      false;
+
+
+    button.innerText =
+      "Fırsatı Hesapla";
+
+  }
+
 }
 
+
+/* =========================================
+   BAŞLANGIÇ
+========================================= */
 
 loadRadar();
 
