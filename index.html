@@ -1,1062 +1,133 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AI Ticaret Radar</title>
+function renderTrends(list=trends){
 
-<style>
-*{
-  box-sizing:border-box;
-  margin:0;
-  padding:0;
-}
+  const container =
+    document.getElementById("trendList");
 
-:root{
-  --bg:#07111f;
-  --card:#0d1a2b;
-  --card2:#091522;
-  --line:#203750;
-  --text:#f5f7fa;
-  --muted:#91a4bb;
-  --green:#72d694;
-  --green2:#15945b;
-  --yellow:#ffd66b;
-  --red:#ff7272;
-<script>
-let liveTrends = [];
+  if(!list.length){
 
-async function loadLiveRadar() {
-  const status = document.getElementById("statusText");
-  const list = document.getElementById("trendList");
-  const count = document.getElementById("trendCount");
-  const best = document.getElementById("bestScore");
-  const opportunities = document.getElementById("opportunityCount");
+    container.innerHTML =
+      '<div class="empty">Bu aramaya uygun trend bulunamadı.</div>';
 
-  try {
-    status.textContent = "Güncel veriler alınıyor...";
-
-    const response = await fetch("/api/radar", {
-      cache: "no-store"
-    });
-
-    if (!response.ok) {
-      throw new Error("Radar API bağlantısı başarısız");
-    }
-
-    const data = await response.json();
-
-    if (!data.success || !Array.isArray(data.trends)) {
-      throw new Error("Geçersiz radar verisi");
-    }
-
-    liveTrends = data.trends;
-
-    count.textContent = liveTrends.length;
-    best.textContent = data.radarScore || 0;
-    opportunities.textContent = data.opportunityCount || 0;
-
-    renderLiveTrends(liveTrends);
-
-    status.textContent = "Radar aktif";
-
-  } catch (error) {
-
-    console.error("LIVE RADAR ERROR:", error);
-
-    status.textContent = "Veri bağlantısı bekleniyor";
-
-    list.innerHTML = `
-      <div class="trend">
-        <h3>⚠️ Güncel veri alınamadı</h3>
-        <p class="meta">
-          Radar bağlantısı geçici olarak kullanılamıyor.
-          Birkaç saniye sonra tekrar deneyin.
-        </p>
-      </div>
-    `;
-  }
-}
-
-
-function renderLiveTrends(items) {
-
-  const list = document.getElementById("trendList");
-
-  if (!items.length) {
-    list.innerHTML = `
-      <div class="trend">
-        <h3>Trend bulunamadı</h3>
-        <p class="meta">
-          Şu anda uygun ticari trend bulunamadı.
-        </p>
-      </div>
-    `;
     return;
   }
 
-  list.innerHTML = items.map((item, index) => {
+  container.innerHTML = list
 
-    let badge = "İNCELE";
+    .sort((a,b)=>b.score-a.score)
 
-    if (item.score >= 80) {
-      badge = "🔥 GÜÇLÜ FIRSAT";
-    } else if (item.score >= 65) {
-      badge = "🟡 TEST ET";
-    } else {
-      badge = "⚪ İNCELENECEK";
-    }
+    .map((item,index)=>`
 
-    return `
-      <div class="trend">
+      <div
+        class="trend"
+        onclick="selectTrend(${index})"
+        style="cursor:pointer"
+      >
 
-        <div class="trend-top">
+        <div>
 
-          <div>
-            <h3>
-              ${index + 1}. ${escapeHtml(item.trend)}
-            </h3>
-
-            <p class="meta">
-              Arama trafiği: ${escapeHtml(item.traffic || "—")}
-            </p>
-
-            <p class="meta">
-              ${escapeHtml(item.category || "İncelenecek")}
-            </p>
-
-            <p class="meta">
-              Ürün fikri: ${escapeHtml(
-                item.productIdea || "Araştırılmalı"
-              )}
-            </p>
-
-            <span class="badge">
-              ${badge}
-            </span>
+          <div class="trend-name">
+            ${item.trend}
           </div>
 
-          <div class="score">
-            ${item.score}/100
+          <div class="trend-info">
+            Arama hacmi: ${item.traffic}
+            · Ticari aday: ${item.category}
           </div>
+
+          <span class="badge">
+
+            ${
+              item.score >= 85
+              ? "GÜÇLÜ SİNYAL"
+              : item.score >= 70
+              ? "AKTİF"
+              : "İNCELENECEK"
+            }
+
+          </span>
 
         </div>
 
-      </div>
-    `;
-
-  }).join("");
-}
-
-
-function escapeHtml(value) {
-
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-
-/* Arama kutusu artık canlı veriyi arayacak */
-function filterTrends() {
-
-  const search =
-    document
-      .getElementById("trendSearch")
-      .value
-      .toLowerCase()
-      .trim();
-
-  if (!search) {
-    renderLiveTrends(liveTrends);
-    return;
-  }
-
-  const filtered = liveTrends.filter(item =>
-    String(item.trend)
-      .toLowerCase()
-      .includes(search)
-  );
-
-  renderLiveTrends(filtered);
-}
-
-
-/* Sayfa açılır açılmaz canlı radar */
-loadLiveRadar();
-
-
-/* Her 5 dakikada bir güncelle */
-setInterval(loadLiveRadar, 5 * 60 * 1000);
-
-</script>
-
-
-
-
-header{
-  position:sticky;
-  top:0;
-  z-index:20;
-  padding:24px 6%;
-  background:rgba(7,17,31,.94);
-  backdrop-filter:blur(14px);
-  border-bottom:1px solid var(--line);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-}
-
-.logo{
-  font-size:26px;
-  font-weight:900;
-}
-
-.logo span{
-  color:var(--green);
-}
-
-.status{
-  color:var(--muted);
-  font-size:17px;
-}
-
-.dot{
-  display:inline-block;
-  width:14px;
-  height:14px;
-  background:var(--green);
-  border-radius:50%;
-  margin-right:10px;
-  box-shadow:0 0 20px var(--green);
-}
-
-.container{
-  width:min(1000px,92%);
-  margin:auto;
-  padding:40px 0 80px;
-}
-
-.hero{
-  margin-bottom:35px;
-}
-
-.hero h1{
-  font-size:42px;
-  margin-bottom:12px;
-}
-
-.hero h1 span{
-  color:var(--green);
-}
-
-.hero p{
-  color:var(--muted);
-  font-size:19px;
-}
-
-.card{
-  background:linear-gradient(145deg,var(--card),var(--card2));
-  border:1px solid var(--line);
-  border-radius:28px;
-  padding:30px;
-  margin-bottom:30px;
-  box-shadow:0 15px 50px rgba(0,0,0,.18);
-}
-
-.card h2{
-  font-size:30px;
-  margin-bottom:25px;
-}
-
-.search{
-  width:100%;
-  padding:20px;
-  border-radius:18px;
-  border:1px solid #315170;
-  background:#071421;
-  color:white;
-  font-size:18px;
-  outline:none;
-  margin-bottom:25px;
-}
-
-.search:focus{
-  border-color:var(--green);
-  box-shadow:0 0 0 3px rgba(114,214,148,.1);
-}
-
-.btn{
-  width:100%;
-  border:0;
-  border-radius:18px;
-  padding:18px;
-  font-size:19px;
-  font-weight:800;
-  cursor:pointer;
-  background:var(--green);
-  color:#06120b;
-  margin-top:10px;
-}
-
-.btn:active{
-  transform:scale(.99);
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:15px;
-}
-
-.stat{
-  border:1px solid var(--line);
-  border-radius:20px;
-  padding:25px;
-}
-
-.stat small{
-  display:block;
-  color:var(--muted);
-  font-size:16px;
-}
-
-.stat strong{
-  display:block;
-  font-size:42px;
-  margin-top:8px;
-}
-
-.trends{
-  display:grid;
-  gap:16px;
-}
-
-.trend{
-  border:1px solid var(--line);
-  border-radius:22px;
-  padding:22px;
-  background:#091522;
-}
-
-.trend-top{
-  display:flex;
-  justify-content:space-between;
-  gap:15px;
-  align-items:center;
-}
-
-.trend h3{
-  font-size:21px;
-}
-
-.score{
-  min-width:82px;
-  text-align:center;
-  padding:10px 13px;
-  border-radius:30px;
-  font-weight:900;
-  background:#145d43;
-  color:var(--green);
-}
-
-.meta{
-  color:var(--muted);
-  margin:8px 0;
-}
-
-.badge{
-  display:inline-block;
-  border:1px solid var(--green2);
-  color:var(--green);
-  border-radius:20px;
-  padding:5px 12px;
-  font-size:13px;
-  font-weight:700;
-}
-
-.result{
-  display:none;
-}
-
-.result.show{
-  display:block;
-}
-
-.result-title{
-  font-size:30px;
-  margin-bottom:25px;
-}
-
-.result-score{
-  font-size:70px;
-  color:var(--green);
-  font-weight:900;
-}
-
-.rows{
-  margin-top:25px;
-}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  padding:16px 0;
-  border-bottom:1px solid var(--line);
-  gap:20px;
-}
-
-.row span:first-child{
-  color:var(--muted);
-}
-
-.row strong{
-  text-align:right;
-}
-
-.decision{
-  margin-top:25px;
-  padding:22px;
-  border-radius:20px;
-  background:#0a1825;
-  border:1px solid var(--line);
-  font-size:25px;
-  font-weight:900;
-}
-
-.decision.good{
-  color:var(--green);
-}
-
-.decision.test{
-  color:var(--yellow);
-}
-
-.decision.bad{
-  color:var(--red);
-}
-
-.info{
-  color:var(--muted);
-  font-size:15px;
-  margin-top:20px;
-}
-
-@media(max-width:650px){
-  header{
-    padding:20px 5%;
-  }
-
-  .logo{
-    font-size:21px;
-  }
-
-  .status{
-    font-size:14px;
-  }
-
-  .hero h1{
-    font-size:32px;
-  }
-
-  .card{
-    padding:22px;
-    border-radius:22px;
-  }
-
-  .stats{
-    grid-template-columns:1fr;
-  }
-
-  .trend-top{
-    align-items:flex-start;
-  }
-
-  .result-score{
-    font-size:55px;
-  }
-
-  .row{
-    font-size:16px;
-  }
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <div class="logo">
-    AI <span>TİCARET RADAR</span>
-  </div>
-
-  <div class="status">
-    <span class="dot"></span>
-    <span id="statusText">Radar aktif</span>
-  </div>
-</header>
-
-<main class="container">
-
-<section class="hero">
-  <h1>Ticari fırsatları <span>yakala.</span></h1>
-  <p>
-    Arama trendlerini ticari açıdan değerlendirir,
-    gerçek ürün fırsatlarını öne çıkarır.
-  </p>
-</section>
-
-<section class="card">
-
-  <h2>🔥 Canlı Trend Sinyalleri</h2>
-
-  <input
-    id="trendSearch"
-    class="search"
-    type="text"
-    placeholder="Trend ara... örn. keten, telefon, ayakkabı"
-    oninput="filterTrends()"
-  >
-
-  <div class="stats">
-    <div class="stat">
-      <small>Trend adedi</small>
-      <strong id="trendCount">10</strong>
-    </div>
-
-    <div class="stat">
-      <small>En güçlü sinyal</small>
-      <strong id="bestScore">96</strong>
-    </div>
-
-    <div class="stat">
-      <small>Ticari fırsat</small>
-      <strong id="opportunityCount">0</strong>
-    </div>
-  </div>
-
-  <div style="height:25px"></div>
-
-  <div id="trendList" class="trends"></div>
-
-</section>
-
-<section class="card">
-
-  <h2>🎯 Ticari Fırsat Motoru</h2>
-
-  <input
-    id="product"
-    class="search"
-    value="Keten Gömlek"
-    placeholder="Ürün adı"
-  >
-
-  <input
-    id="cost"
-    class="search"
-    type="number"
-    value="350"
-    placeholder="Ürün maliyeti TL"
-  >
-
-  <input
-    id="sale"
-    class="search"
-    type="number"
-    value="750"
-    placeholder="Satış fiyatı TL"
-  >
-
-  <input
-    id="demand"
-    class="search"
-    type="number"
-    min="0"
-    max="100"
-    value="75"
-    placeholder="Talep skoru 0-100"
-  >
-
-  <select id="competition" class="search">
-    <option value="low">Düşük rekabet</option>
-    <option value="medium" selected>Orta rekabet</option>
-    <option value="high">Yüksek rekabet</option>
-  </select>
-
-  <button class="btn" onclick="calculateOpportunity()">
-    🚀 Fırsatı Hesapla
-  </button>
-
-  <div id="result" class="result"></div>
-
-</section>
-
-<section class="card">
-
-  <h2>🏷️ Ticari Radar Odakları</h2>
-
-  <div class="trends">
-
-    <div class="trend">
-      <h3>KETEN GÖMLEK</h3>
-      <p class="meta">Tekstil · üretim · moda</p>
-      <span class="badge">ÜRETİM</span>
-    </div>
-
-    <div class="trend">
-      <h3>KETEN PANTOLON</h3>
-      <p class="meta">Tekstil · üretim · e-ticaret</p>
-      <span class="badge">ÜRETİM</span>
-    </div>
-
-    <div class="trend">
-      <h3>KETEN ŞORT</h3>
-      <p class="meta">Tekstil · yazlık moda · üretim</p>
-      <span class="badge">SEZON</span>
-    </div>
-
-    <div class="trend">
-      <h3>OVERSIZE GÖMLEK</h3>
-      <p class="meta">Moda · tekstil · e-ticaret</p>
-      <span class="badge">MODA RADARI</span>
-    </div>
-
-  </div>
-
-</section>
-
-<section class="card">
-
-  <h2>⚙️ Radar Mantığı</h2>
-
-  <div class="trend">
-    <h3>1. Ticari uygunluk</h3>
-    <p class="meta">
-      Trend gerçekten satılabilir bir ürün veya hizmetle
-      bağlantılı mı?
-    </p>
-  </div>
-
-  <div class="trend">
-    <h3>2. Talep</h3>
-    <p class="meta">
-      Arama ve müşteri ilgisi ne kadar yüksek?
-    </p>
-  </div>
-
-  <div class="trend">
-    <h3>3. Marj</h3>
-    <p class="meta">
-      Maliyet ile satış fiyatı arasında yeterli alan var mı?
-    </p>
-  </div>
-
-  <div class="trend">
-    <h3>4. Rekabet</h3>
-    <p class="meta">
-      Pazar ne kadar kalabalık?
-    </p>
-  </div>
-
-  <div class="trend">
-    <h3>5. Karar</h3>
-    <p class="meta">
-      Sonuç: GÜÇLÜ FIRSAT / TEST ET / UZAK DUR
-    </p>
-  </div>
-
-</section>
-
-<p class="info">
-  Not: Radar skoru karar destek amaçlıdır. Gerçek satış kararı;
-  maliyet, stok, reklam, kargo ve pazar verileri birlikte
-  değerlendirilerek verilmelidir.
-</p>
-
-</main>
-
-<script>
-
-const trends = [
-
-  {
-    name:"Keten Gömlek",
-    traffic:900,
-    demand:91,
-    competition:"Orta",
-    category:"Tekstil / üretim",
-    commercial:true
-  },
-
-  {
-    name:"Keten Pantolon",
-    traffic:750,
-    demand:87,
-    competition:"Orta",
-    category:"Tekstil / e-ticaret",
-    commercial:true
-  },
-
-  {
-    name:"Keten Şort",
-    traffic:600,
-    demand:84,
-    competition:"Düşük",
-    category:"Tekstil / sezon",
-    commercial:true
-  },
-
-  {
-    name:"Oversize Gömlek",
-    traffic:1000,
-    demand:88,
-    competition:"Yüksek",
-    category:"Moda / e-ticaret",
-    commercial:true
-  },
-
-  {
-    name:"Ayakkabı",
-    traffic:1000,
-    demand:82,
-    competition:"Yüksek",
-    category:"Moda",
-    commercial:true
-  },
-
-  {
-    name:"Telefon Kılıfı",
-    traffic:800,
-    demand:78,
-    competition:"Yüksek",
-    category:"Aksesuar",
-    commercial:true
-  },
-
-  {
-    name:"Doğa Rutkay",
-    traffic:100,
-    demand:20,
-    competition:"Yüksek",
-    category:"Kişi / gündem",
-    commercial:false
-  },
-
-  {
-    name:"Beşiktaş Maçları",
-    traffic:200,
-    demand:25,
-    competition:"Yüksek",
-    category:"Spor / gündem",
-    commercial:false
-  },
-
-  {
-    name:"KPSS Ortaöğretim Sınavı",
-    traffic:100,
-    demand:18,
-    competition:"Yüksek",
-    category:"Eğitim / bilgi",
-    commercial:false
-  },
-
-  {
-    name:"Sermaye Piyasası",
-    traffic:500,
-    demand:35,
-    competition:"Yüksek",
-    category:"Finans / bilgi",
-    commercial:false
-  }
-
-];
-
-function calculateTrendScore(t){
-
-  if(!t.commercial){
-    return Math.min(45, t.demand + 20);
-  }
-
-  let score = 0;
-
-  score += t.demand * 0.55;
-
-  if(t.competition === "Düşük"){
-    score += 25;
-  }
-
-  else if(t.competition === "Orta"){
-    score += 17;
-  }
-
-  else{
-    score += 8;
-  }
-
-  if(t.traffic >= 1000){
-    score += 18;
-  }
-
-  else if(t.traffic >= 500){
-    score += 13;
-  }
-
-  else{
-    score += 8;
-  }
-
-  return Math.round(Math.min(100,score));
-}
-
-function renderTrends(list = trends){
-
-  const box = document.getElementById("trendList");
-
-  box.innerHTML = "";
-
-  list.forEach(t => {
-
-    const score = calculateTrendScore(t);
-
-    let badge = t.commercial
-      ? "TİCARİ"
-      : "ELE";
-
-    box.innerHTML += `
-      <div class="trend">
-
-        <div class="trend-top">
-
-          <div>
-            <h3>${t.name.toUpperCase()}</h3>
-
-            <p class="meta">
-              Arama trafiği: ${t.traffic}+
-            </p>
-
-            <p class="meta">
-              ${t.category}
-            </p>
-
-            <span class="badge">${badge}</span>
-          </div>
-
-          <div class="score">
-            ${score}/100
-          </div>
-
+        <div class="score">
+          ${item.score}/100
         </div>
 
       </div>
-    `;
 
-  });
+    `)
 
-  const commercial = list.filter(t => t.commercial);
+    .join("");
 
-  document.getElementById("trendCount").textContent = list.length;
-
-  document.getElementById("opportunityCount").textContent =
-    commercial.length;
-
-  const scores = trends.map(calculateTrendScore);
-
-  document.getElementById("bestScore").textContent =
-    Math.max(...scores);
+  updateStats();
 
 }
 
-function filterTrends(){
 
-  const query =
-    document.getElementById("trendSearch")
-    .value
-    .toLowerCase()
-    .trim();
+function selectTrend(index){
 
-  if(!query){
+  const item =
+    trends
+      .sort((a,b)=>b.score-a.score)[index];
 
-    renderTrends(trends);
+  if(!item) return;
 
-    return;
-  }
+  /*
+    Radar skorunu
+    Ticari Fırsat Motoru'na aktar
+  */
 
-  const filtered = trends.filter(t =>
-    t.name.toLowerCase().includes(query) ||
-    t.category.toLowerCase().includes(query)
-  );
+  document.getElementById("demand").value =
+    item.score;
 
-  renderTrends(filtered);
+  /*
+    Kullanıcıya hangi trendi
+    seçtiğini göster
+  */
 
-}
+  const result =
+    document.getElementById("result");
 
-function calculateOpportunity(){
+  result.style.display = "block";
 
-  const product =
-    document.getElementById("product").value.trim() ||
-    "Ürün";
-
-  const cost =
-    Number(document.getElementById("cost").value);
-
-  const sale =
-    Number(document.getElementById("sale").value);
-
-  const demand =
-    Number(document.getElementById("demand").value);
-
-  const competition =
-    document.getElementById("competition").value;
-
-  if(!cost || !sale || sale <= cost){
-
-    alert("Satış fiyatı maliyetten yüksek olmalı.");
-
-    return;
-  }
-
-  const profit = sale - cost;
-
-  const margin =
-    (profit / sale) * 100;
-
-  let competitionScore = 65;
-
-  if(competition === "low"){
-    competitionScore = 95;
-  }
-
-  if(competition === "medium"){
-    competitionScore = 70;
-  }
-
-  if(competition === "high"){
-    competitionScore = 40;
-  }
-
-  const commercialScore = 85;
-
-  const score = Math.round(
-    demand * 0.40 +
-    margin * 0.30 +
-    competitionScore * 0.20 +
-    commercialScore * 0.10
-  );
-
-  let decision = "";
-  let decisionClass = "";
-  let recommendation = "";
-
-  if(score >= 80){
-
-    decision = "🚀 GÜÇLÜ FIRSAT";
-    decisionClass = "good";
-
-    recommendation =
-      "Ürünü küçük bir test üretimiyle piyasaya çıkar. " +
-      "Talebi ve gerçek satış performansını ölç.";
-
-  }
-
-  else if(score >= 60){
-
-    decision = "🟡 TEST ET";
-    decisionClass = "test";
-
-    recommendation =
-      "Büyük stok yapma. Küçük miktarda test ederek " +
-      "müşteri talebini doğrula.";
-
-  }
-
-  else{
-
-    decision = "🔴 UZAK DUR";
-    decisionClass = "bad";
-
-    recommendation =
-      "Şimdilik yatırım yapma. Daha güçlü ticari sinyal bekle.";
-
-  }
-
-  const testProduction =
-    score >= 80 ? 30 :
-    score >= 60 ? 15 :
-    0;
-
-  document.getElementById("result").innerHTML = `
+  result.innerHTML = `
 
     <div class="result-title">
-      📡 Radar Sonucu
+      RADAR → FIRSAT MOTORU
     </div>
 
-    <div class="result-score">
-      ${score}/100
-    </div>
+    <strong>
+      🎯 ${item.trend}
+    </strong>
 
-    <div class="rows">
+    <div class="recommend">
 
-      <div class="row">
-        <span>Ürün</span>
-        <strong>${product}</strong>
-      </div>
+      Radar sinyali:
+      <b>${item.score}/100</b>
 
-      <div class="row">
-        <span>Brüt kâr</span>
-        <strong>${profit.toFixed(0)} TL</strong>
-      </div>
+      <br><br>
 
-      <div class="row">
-        <span>Brüt marj</span>
-        <strong>%${margin.toFixed(1)}</strong>
-      </div>
+      Kategori:
+      <b>${item.category}</b>
 
-      <div class="row">
-        <span>Talep</span>
-        <strong>${demand}/100</strong>
-      </div>
+      <br><br>
 
-      <div class="row">
-        <span>Rekabet</span>
-        <strong>${
-          competition === "low"
-          ? "Düşük"
-          : competition === "medium"
-          ? "Orta"
-          : "Yüksek"
-        }</strong>
-      </div>
+      Talep skoru otomatik olarak
+      Fırsat Motoru'na aktarıldı.
 
-      <div class="row">
-        <span>Karar</span>
-        <strong>${decision}</strong>
-      </div>
+      <br><br>
 
-      <div class="row">
-        <span>Önerilen test üretimi</span>
-        <strong>${testProduction} adet</strong>
-      </div>
+      Şimdi maliyet ve satış fiyatını
+      girip <b>Fırsatı Hesapla</b>'ya bas.
 
-    </div>
-
-    <div class="decision ${decisionClass}">
-      ${recommendation}
     </div>
 
   `;
 
-  document.getElementById("result")
-    .classList.add("show");
+  document
+    .getElementById("cost")
+    .scrollIntoView({
+      behavior:"smooth",
+      block:"center"
+    });
 
 }
-
-renderTrends();
-
-</script>
-
-</body>
-</html>
