@@ -1,6 +1,9 @@
 export default async function handler(req, res) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 15000);
+
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, 15000);
 
   try {
     const response = await fetch(
@@ -10,19 +13,26 @@ export default async function handler(req, res) {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/131 Safari/537.36",
-          Accept: "application/rss+xml, application/xml, text/xml, */*"
+          "Accept":
+            "application/rss+xml, application/xml, text/xml, */*"
         }
       }
     );
 
+    clearTimeout(timeout);
+
     if (!response.ok) {
-      throw new Error(`Google Trends HTTP ${response.status}`);
+      throw new Error(
+        `Google Trends HTTP ${response.status}`
+      );
     }
 
     const xml = await response.text();
 
     if (!xml || !/<item[\s>]/i.test(xml)) {
-      throw new Error("Google Trends verisi alınamadı");
+      throw new Error(
+        "Google Trends verisi alınamadı."
+      );
     }
 
     function clean(value) {
@@ -54,7 +64,9 @@ export default async function handler(req, res) {
     }
 
     const rawTrends = [
-      ...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)
+      ...xml.matchAll(
+        /<item>([\s\S]*?)<\/item>/gi
+      )
     ]
       .map((match, index) => ({
         rank: index + 1,
@@ -66,7 +78,12 @@ export default async function handler(req, res) {
       }))
       .filter(item => item.trend);
 
-    // TİCARİ KELİMELER
+    /*
+      ==========================================
+      TİCARİ KELİMELER
+      ==========================================
+    */
+
     const commercialWords = [
       "ürün",
       "fiyat",
@@ -76,6 +93,9 @@ export default async function handler(req, res) {
       "satış",
       "mağaza",
       "market",
+      "online",
+      "e-ticaret",
+      "ticaret",
 
       "telefon",
       "iphone",
@@ -102,6 +122,8 @@ export default async function handler(req, res) {
       "kot",
       "jean",
       "eşofman",
+      "tekstil",
+      "keten",
 
       "parfüm",
       "kozmetik",
@@ -161,7 +183,12 @@ export default async function handler(req, res) {
       "şarj"
     ];
 
-    // SPOR / HABER / MAGAZİN FİLTRESİ
+    /*
+      ==========================================
+      SPOR / MAGAZİN / HABER / BAHİS FİLTRESİ
+      ==========================================
+    */
+
     const noiseWords = [
       "maç",
       "maçları",
@@ -171,12 +198,34 @@ export default async function handler(req, res) {
       "puan",
       "skor",
       "lig",
+      "şampiyon",
+      "şampiyonlar",
+
+      "trabzonspor",
+      "beşiktaş",
+      "galatasaray",
+      "fenerbahçe",
+      "başakşehir",
+      "benfica",
+      "estoril",
+      "barcelona",
+      "rayo",
+      "alcaraz",
+      "carlos alcaraz",
+      "bein sports",
+      "beinsports",
+
+      "bahis",
+      "bet",
+      "bet tv",
+      "iptv",
 
       "son dakika",
       "kimdir",
       "kaç yaşında",
       "nereli",
       "evlendi",
+      "boşandı",
 
       "seçim",
       "siyaset",
@@ -184,6 +233,7 @@ export default async function handler(req, res) {
       "bakan",
       "cumhurbaşkanı",
       "meclis",
+      "parti",
 
       "yangın",
       "deprem",
@@ -191,6 +241,8 @@ export default async function handler(req, res) {
       "ölüm",
       "vefat",
       "cenaze",
+      "kaza",
+      "saldırı",
 
       "dizi",
       "film",
@@ -205,38 +257,40 @@ export default async function handler(req, res) {
       "yks",
       "tyt",
       "ayt",
-      "üniversite",
-
-      "trabzonspor",
-      "beşiktaş",
-      "galatasaray",
-      "fenerbahçe",
-      "beinsports",
-      "bein sports",
-
-      "carlos alcaraz",
-      "benfica - estoril",
-      "barcelona vs rayo",
-      "barcelona rayo",
-
-      "bahis",
-      "bet tv",
-      "iptv"
+      "üniversite"
     ];
 
+    function lower(text) {
+      return String(text || "")
+        .toLocaleLowerCase("tr-TR");
+    }
+
+    function hits(text, words) {
+      const value = lower(text);
+
+      return words.filter(word =>
+        value.includes(lower(word))
+      ).length;
+    }
+
     function trafficNumber(value) {
-      const text = String(value || "")
-        .toLowerCase()
+      const text = lower(value)
         .replace(/\s/g, "")
         .replace(/,/g, ".");
 
       const match = text.match(/[\d.]+/);
 
-      if (!match) return 0;
+      if (!match) {
+        return 0;
+      }
 
-      const number = Number.parseFloat(match[0]);
+      const number = Number.parseFloat(
+        match[0]
+      );
 
-      if (!Number.isFinite(number)) return 0;
+      if (!Number.isFinite(number)) {
+        return 0;
+      }
 
       if (
         text.includes("milyon") ||
@@ -255,31 +309,36 @@ export default async function handler(req, res) {
       return number;
     }
 
-    function hits(text, words) {
-      const lower = String(text || "")
-        .toLocaleLowerCase("tr-TR");
-
-      return words.filter(word =>
-        lower.includes(word)
-      ).length;
-    }
-
     function trafficScore(traffic) {
-      const number = trafficNumber(traffic);
+      const number = trafficNumber(
+        traffic
+      );
 
-      if (number >= 1000000) return 100;
-      if (number >= 500000) return 94;
-      if (number >= 200000) return 88;
-      if (number >= 100000) return 82;
-      if (number >= 50000) return 75;
-      if (number >= 10000) return 68;
-      if (number >= 5000) return 60;
-      if (number >= 1000) return 54;
+      if (number >= 1000000) return 90;
+      if (number >= 500000) return 84;
+      if (number >= 200000) return 78;
+      if (number >= 100000) return 72;
+      if (number >= 50000) return 66;
+      if (number >= 10000) return 60;
+      if (number >= 5000) return 55;
+      if (number >= 1000) return 50;
+      if (number >= 500) return 45;
+      if (number >= 200) return 40;
+      if (number >= 100) return 35;
 
-      return 48;
+      return 30;
     }
 
-    function calculateScore(trend, traffic) {
+    /*
+      ==========================================
+      TİCARİ SKOR
+      ==========================================
+    */
+
+    function calculateScore(
+      trend,
+      traffic
+    ) {
       const commercial = hits(
         trend,
         commercialWords
@@ -290,19 +349,36 @@ export default async function handler(req, res) {
         noiseWords
       );
 
-      let score = trafficScore(traffic);
+      let score = trafficScore(
+        traffic
+      );
 
-      score += Math.min(commercial, 3) * 12;
+      /*
+        Ticari kelime bonusu
+      */
 
-      score -= noise * 60;
+      score += Math.min(
+        commercial,
+        3
+      ) * 10;
+
+      /*
+        Arama konusu direkt ticariyse
+      */
 
       if (commercial >= 2) {
         score += 8;
       }
 
-      if (commercial >= 3) {
-        score += 5;
-      }
+      /*
+        Gürültü varsa ciddi düşür
+      */
+
+      score -= noise * 70;
+
+      /*
+        Asla 100'ü geçmesin
+      */
 
       return Math.max(
         0,
@@ -313,9 +389,14 @@ export default async function handler(req, res) {
       );
     }
 
+    /*
+      ==========================================
+      KATEGORİ
+      ==========================================
+    */
+
     function getCategory(trend) {
-      const text = String(trend || "")
-        .toLocaleLowerCase("tr-TR");
+      const text = lower(trend);
 
       if (
         [
@@ -333,10 +414,14 @@ export default async function handler(req, res) {
           "moda",
           "kot",
           "jean",
-          "eşofman"
-        ].some(x => text.includes(x))
+          "eşofman",
+          "tekstil",
+          "keten"
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
-        return "Moda";
+        return "Moda / Tekstil";
       }
 
       if (
@@ -353,9 +438,11 @@ export default async function handler(req, res) {
           "tablet",
           "kulaklık",
           "televizyon",
-          "ps5",
-          "elektronik"
-        ].some(x => text.includes(x))
+          "elektronik",
+          "ps5"
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Elektronik";
       }
@@ -369,7 +456,9 @@ export default async function handler(req, res) {
           "aksesuar",
           "altın",
           "gümüş"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Aksesuar";
       }
@@ -383,7 +472,9 @@ export default async function handler(req, res) {
           "bakım",
           "şampuan",
           "krem"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Kozmetik";
       }
@@ -396,7 +487,9 @@ export default async function handler(req, res) {
           "market",
           "restoran",
           "yemek"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Gıda";
       }
@@ -410,9 +503,11 @@ export default async function handler(req, res) {
           "ev",
           "dekorasyon",
           "halı"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
-        return "Ev Yaşam";
+        return "Ev / Yaşam";
       }
 
       if (
@@ -422,7 +517,9 @@ export default async function handler(req, res) {
           "oyuncak",
           "mama",
           "bebek arabası"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Çocuk / Bebek";
       }
@@ -442,17 +539,24 @@ export default async function handler(req, res) {
           "akaryakıt",
           "yakıt",
           "şarj"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Otomotiv / Yakıt";
       }
 
-      return "Diğer Ticari";
+      return "Ticari";
     }
 
+    /*
+      ==========================================
+      ÜRÜN / İŞ FİKRİ
+      ==========================================
+    */
+
     function getProductIdea(trend) {
-      const text = String(trend || "")
-        .toLocaleLowerCase("tr-TR");
+      const text = lower(trend);
 
       if (
         [
@@ -468,8 +572,12 @@ export default async function handler(req, res) {
           "tshirt",
           "oversize",
           "kot",
-          "jean"
-        ].some(x => text.includes(x))
+          "jean",
+          "tekstil",
+          "keten"
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Tekstil / moda ürünü";
       }
@@ -483,21 +591,25 @@ export default async function handler(req, res) {
           "oppo",
           "huawei",
           "pixel"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Telefon aksesuarı";
       }
 
-      if (text.includes("ayakkabı")) {
-        return "Ayakkabı / aksesuar";
-      }
-
-      if (text.includes("çanta")) {
-        return "Çanta / moda aksesuarı";
-      }
-
-      if (text.includes("kahve")) {
-        return "Kahve / ekipman";
+      if (
+        [
+          "ayakkabı",
+          "çanta",
+          "takı",
+          "saat",
+          "aksesuar"
+        ].some(x =>
+          text.includes(x)
+        )
+      ) {
+        return "Moda aksesuarı";
       }
 
       if (
@@ -507,29 +619,50 @@ export default async function handler(req, res) {
           "makyaj",
           "cilt",
           "bakım"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Kozmetik / bakım";
       }
 
       if (
         [
+          "kahve",
+          "çay",
+          "gıda",
+          "restoran",
+          "yemek"
+        ].some(x =>
+          text.includes(x)
+        )
+      ) {
+        return "Gıda / içecek";
+      }
+
+      if (
+        [
           "bebek",
+          "çocuk",
           "oyuncak",
-          "çocuk"
-        ].some(x => text.includes(x))
+          "mama"
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Bebek / çocuk ürünü";
       }
 
       if (
         [
-          "ev",
           "mobilya",
+          "ev",
           "dekorasyon"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
-        return "Ev yaşam ürünü";
+        return "Ev / yaşam ürünü";
       }
 
       if (
@@ -540,7 +673,9 @@ export default async function handler(req, res) {
           "motosiklet",
           "lastik",
           "jant"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Otomotiv ürünü / aksesuar";
       }
@@ -552,116 +687,236 @@ export default async function handler(req, res) {
           "benzin",
           "akaryakıt",
           "yakıt"
-        ].some(x => text.includes(x))
+        ].some(x =>
+          text.includes(x)
+        )
       ) {
         return "Yakıt / otomotiv hizmeti";
       }
 
-      return "Ticari kategori araştırılmalı";
+      return "Ticari fırsat araştırılmalı";
     }
 
-    const scoredTrends = rawTrends
-      .map(item => {
-        const commercial = hits(
-          item.trend,
-          commercialWords
-        );
+    /*
+      ==========================================
+      TRENDLERİ PUANLA
+      ==========================================
+    */
 
-        const noise = hits(
-          item.trend,
-          noiseWords
-        );
+    const allScored = rawTrends
+      .map(item => {
+        const commercialHits =
+          hits(
+            item.trend,
+            commercialWords
+          );
+
+        const noiseHits =
+          hits(
+            item.trend,
+            noiseWords
+          );
+
+        const score =
+          calculateScore(
+            item.trend,
+            item.traffic
+          );
 
         return {
           rank: item.rank,
+
           trend: item.trend,
-          traffic: item.traffic || "—",
-          score: calculateScore(
-            item.trend,
-            item.traffic
-          ),
-          category: getCategory(
-            item.trend
-          ),
-          productIdea: getProductIdea(
-            item.trend
-          ),
-          commercial: commercial > 0,
-          noise: noise > 0
+
+          traffic:
+            item.traffic ||
+            "—",
+
+          score,
+
+          category:
+            getCategory(
+              item.trend
+            ),
+
+          productIdea:
+            getProductIdea(
+              item.trend
+            ),
+
+          commercial:
+            commercialHits > 0,
+
+          noise:
+            noiseHits > 0
         };
-      })
+      });
 
-      // EN ÖNEMLİ KISIM:
-      // Spor/haber değil, yalnızca ticari sinyal.
-      .filter(item =>
-        item.commercial &&
-        !item.noise
-      )
+    /*
+      ==========================================
+      1. SADECE TEMİZ TİCARİ TRENDLER
+      ==========================================
+    */
 
-      .sort(
-        (a, b) =>
-          b.score - a.score ||
-          a.rank - b.rank
-      )
+    const commercialTrends =
+      allScored
+        .filter(item =>
+          item.commercial &&
+          !item.noise
+        )
+        .sort(
+          (a, b) =>
+            b.score - a.score ||
+            a.rank - b.rank
+        );
 
-      .slice(0, 10);
+    /*
+      ==========================================
+      2. 10 TANE YOKSA
+      TEMİZ / NÖTR TRENDLERDEN TAMAMLA
+      ==========================================
+    */
 
-    const radarScore =
-      scoredTrends.length
+    const neutralTrends =
+      allScored
+        .filter(item =>
+          !item.commercial &&
+          !item.noise
+        )
+        .sort(
+          (a, b) =>
+            b.score - a.score ||
+            a.rank - b.rank
+        );
+
+    /*
+      Önce gerçek ticari fırsatlar.
+      Sonra nötr konular.
+      Spor/haber asla alınmaz.
+    */
+
+    const finalTrends = [
+      ...commercialTrends,
+      ...neutralTrends
+    ]
+      .slice(0, 10)
+      .map(item => ({
+        ...item,
+
+        /*
+          Nötr konuysa ticari skorunu
+          daha düşük tut.
+        */
+
+        score:
+          item.commercial
+            ? item.score
+            : Math.min(
+                item.score,
+                35
+              ),
+
+        status:
+          item.score >= 75
+            ? "GÜÇLÜ SİNYAL"
+            : item.score >= 55
+            ? "AKTİF"
+            : "İNCELENECEK"
+      }));
+
+    /*
+      ==========================================
+      RADAR ÖZETİ
+      ==========================================
+    */
+
+    const strongest =
+      finalTrends.length
         ? Math.max(
-            ...scoredTrends.map(
+            ...finalTrends.map(
               item =>
-                Number(item.score) || 0
+                Number(
+                  item.score
+                ) || 0
             )
           )
         : 0;
 
-    const opportunityCount =
-      scoredTrends.filter(
-        item => item.score >= 65
+    const commercialCount =
+      finalTrends.filter(
+        item =>
+          item.commercial
       ).length;
 
-    res.setHeader(
-      "Cache-Control",
-      "s-maxage=300, stale-while-revalidate=600"
-    );
+    /*
+      ==========================================
+      CEVAP
+      ==========================================
+    */
 
-    return res.status(200).json({
-      success: true,
+    res.status(200).json({
+      ok: true,
+
       country: "TR",
-      source: "Google Trends Türkiye",
+
       updatedAt:
         new Date().toISOString(),
-      count:
-        scoredTrends.length,
-      radarScore,
-      opportunityCount,
-      trends:
-        scoredTrends
-    });
 
+      lastScan:
+        "şimdi",
+
+      trendCount:
+        finalTrends.length,
+
+      strongestScore:
+        strongest,
+
+      commercialCount,
+
+      commercialOpportunities:
+        commercialCount,
+
+      trends:
+        finalTrends,
+
+      /*
+        Frontend eski isimleri
+        kullanıyorsa bunlar da çalışır.
+      */
+
+      stats: {
+        trendCount:
+          finalTrends.length,
+
+        strongestScore:
+          strongest,
+
+        commercialCount:
+          commercialCount
+      }
+    });
   } catch (error) {
+    clearTimeout(timeout);
 
     console.error(
       "RADAR ERROR:",
       error
     );
 
-    return res.status(500).json({
-      success: false,
-      error:
-        "Güncel trend verisi alınamadı",
-      message:
-        error?.name === "AbortError"
-          ? "Google Trends zaman aşımına uğradı"
-          : error?.message ||
-            "Bilinmeyen hata",
-      updatedAt:
-        new Date().toISOString(),
-      trends: []
-    });
+    res.status(500).json({
+      ok: false,
 
-  } finally {
-    clearTimeout(timeout);
+      error:
+        error?.message ||
+        "Radar verisi alınamadı.",
+
+      trends: [],
+
+      trendCount: 0,
+
+      strongestScore: 0,
+
+      commercialCount: 0
+    });
   }
 }
