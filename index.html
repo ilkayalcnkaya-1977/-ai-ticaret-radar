@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>AI Ticaret Radar</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #07111f;
+      color: #ffffff;
+    }
+
+    .app {
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 80% 0%, #16456d 0%, transparent 35%),
+        #07111f;
+    }
+
+    header {
+      height: 70px;
+      padding: 0 6%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #20344b;
+      background: rgba(7,17,31,.92);
+    }
+
+    .logo {
+      font-size: 20px;
+      font-weight: bold;
+      letter-spacing: .5px;
+    }
+
+    .logo span {
+      color: #58d68d;
+    }
+
+    .status {
+      color: #8fa6bd;
+      font-size: 13px;
+    }
+
+    .dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #58d68d;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+
+    .hero {
+      max-width: 1150px;
+      margin: auto;
+      padding: 70px 6% 35px;
+    }
+
+    .eyebrow {
+      color: #58d68d;
+      font-size: 12px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: clamp(40px, 7vw, 75px);
+      line-height: .98;
+      letter-spacing: -3px;
+      margin: 15px 0 20px;
+    }
+
+    .hero p {
+      max-width: 680px;
+      color: #9eb0c4;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    .dashboard {
+      max-width: 1150px;
+      margin: auto;
+      padding: 20px 6% 70px;
+
+      display: grid;
+      grid-template-columns: 1.4fr .8fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: #0c1a2a;
+      border: 1px solid #20364e;
+      border-radius: 20px;
+      padding: 25px;
+    }
+
+    .card h2 {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    .opportunities {
+      display: grid;
+      gap: 12px;
+    }
+
+    .opportunity {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 17px;
+      border-radius: 14px;
+      background: #091624;
+      border: 1px solid #20364e;
+    }
+
+    .product {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .details {
+      color: #8297ad;
+      font-size: 13px;
+    }
+
+    .score-badge {
+      background: #123d2d;
+      color: #72e6a3;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+
+    .big-score {
+      font-size: 62px;
+      font-weight: bold;
+      color: #58d68d;
+      margin: 5px 0;
+    }
+
+    .muted {
+      color: #8195aa;
+      font-size: 13px;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 25px;
+    }
+
+    .metric {
+      background: #091624;
+      border: 1px solid #1c3147;
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 22px;
+      margin-top: 7px;
+    }
+
+    .green {
+      color: #58d68d;
+    }
+
+    .radar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+      margin-top: 25px;
+    }
+
+    button {
+      border: none;
+      background: #58d68d;
+      color: #06130c;
+      font-weight: bold;
+      padding: 13px 18px;
+      border-radius: 11px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: .9;
+    }
+
+    footer {
+      max-width: 1150px;
+      margin: auto;
+      padding: 0 6% 35px;
+      color: #61788f;
+      font-size: 12px;
+    }
+
+    @media (max-width: 800px) {
+      .dashboard {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        letter-spacing: -2px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <div class="logo">
+      AI <span>TİCARET RADAR</span>
+    </div>
+
+    <div class="status">
+      <span class="dot"></span>
+      Radar hazır
+    </div>
+  </header>
+
+
+  <section class="hero">
+
+    <div class="eyebrow">
+      Yeni nesil ticaret istihbaratı
+    </div>
+
+    <h1>
+      Piyasa fırsatlarını<br>
+      uyumadan yakala.
+    </h1>
+
+    <p>
+      Trend ürünleri, fiyat hareketlerini ve ticaret sinyallerini
+      tek panelde analiz eden AI destekli ticaret radarının ilk sürümü.
+    </p>
+
+  </section>
+
+
+  <section class="dashboard">
+
+    <div class="card">
+
+      <h2>🔥 Bugünün Fırsatları</h2>
+
+      <div class="opportunities">
+
+        <div class="opportunity">
+          <div>
+            <div class="product">
+              Keten Gömlek
+            </div>
+
+            <div class="details">
+              Talep yükseliyor · Rekabet orta
+            </div>
+          </div>
+
+          <div class="score-badge">
+            87 / 100
+          </div>
+        </div>
+
+
+        <div class="opportunity">
+          <div>
+            <div class="product">
+              Oversize Yazlık Gömlek
+            </div>
+
+            <div class="details">
+              Trend ivmesi yüksek
+            </div>
+          </div>
+
+          <div class="score-badge">
+            81 / 100
+          </div>
+        </div>
+
+
+        <div class="opportunity">
+          <div>
+            <div class="product">
+              Doğal Kumaş Şort
+            </div>
+
+            <div class="details">
+              Marj potansiyeli yüksek
+            </div>
+          </div>
+
+          <div class="score-badge">
+            76 / 100
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>📡 Radar Skoru</h2>
+
+      <div class="big-score">
+        87
+      </div>
+
+      <div class="muted">
+        Günün genel fırsat skoru
+      </div>
+
+
+      <div class="metrics">
+
+        <div class="metric">
+          <div class="muted">
+            Trend
+          </div>
+
+          <strong class="green">
+            ↑ 38%
+          </strong>
+        </div>
+
+
+        <div class="metric">
+          <div class="muted">
+            Rekabet
+          </div>
+
+          <strong>
+            Orta
+          </strong>
+        </div>
+
+      </div>
+
+
+      <div class="radar-row">
+
+        <div class="muted">
+          Son tarama: şimdi
+        </div>
+
+        <button onclick="scanRadar()">
+          Radar Tara
+        </button>
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <footer>
+    AI Ticaret Radar · MVP v0.1 · Sinyaller yatırım veya kâr garantisi değildir.
+  </footer>
+
+</div>
+
+
+<script>
+
+function scanRadar() {
+
+  const button = document.querySelector("button");
+
+  button.innerText = "Taranıyor...";
+  button.disabled = true;
+
+  setTimeout(function() {
+
+    button.innerText = "Tarama tamamlandı ✓";
+
+    setTimeout(function() {
+
+      button.innerText = "Radar Tara";
+      button.disabled = false;
+
+    }, 1800);
+
+  }, 1200);
+
+}
+
+</script>
+
+</body>
+</html>
