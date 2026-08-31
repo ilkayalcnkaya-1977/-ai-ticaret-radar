@@ -12,12 +12,12 @@ export default async function handler(req, res) {
       const response = await fetch(
         "https://trends.google.com/trending/rss?geo=TR",
         {
-          method: "GET",
-          signal: controller.signal,
           headers: {
             "User-Agent": "Mozilla/5.0",
-            "Accept": "application/rss+xml, application/xml, text/xml, */*"
-          }
+            "Accept":
+              "application/rss+xml, application/xml, text/xml, */*"
+          },
+          signal: controller.signal
         }
       );
 
@@ -26,20 +26,22 @@ export default async function handler(req, res) {
       if (response.ok) {
         xml = await response.text();
       }
-    } catch (error) {
+    } catch {
       clearTimeout(timeout);
     }
 
-    // Google Trends erişilemezse siteyi boş bırakma
     if (!xml || xml.length < 100) {
       return res.status(200).json({
-        success: true,
-        source: "Radar",
+        success: false,
+        source: "Google Trends",
         country: "TR",
         updatedAt: new Date().toISOString(),
         count: 0,
         opportunityCount: 0,
-        trends: []
+        sellableCount: 0,
+        testCount: 0,
+        trends: [],
+        warning: "Google Trends şu anda veri vermiyor."
       });
     }
 
@@ -116,7 +118,7 @@ export default async function handler(req, res) {
       const text = trend.toLocaleLowerCase("tr-TR");
 
       if (
-        /keten|gömlek|pantolon|şort|elbise|etek|tekstil|moda|ayakkabı|çanta/.test(
+        /keten|gömlek|pantolon|şort|elbise|etek|tekstil|moda|ayakkabı|çanta|takı|aksesuar/.test(
           text
         )
       ) {
@@ -132,9 +134,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /araba|otomobil|otomotiv|lastik|motor|aksesuar/.test(
-          text
-        )
+        /araba|otomobil|otomotiv|lastik|motor/.test(text)
       ) {
         return "Otomotiv";
       }
@@ -156,7 +156,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /maç|maçlar|lig|futbol|basketbol|spor/.test(
+        /spor ayakkabı|forma|eşofman|spor çanta|spor aksesuar/.test(
           text
         )
       ) {
@@ -164,9 +164,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /uçak|uçuş|otel|tatil|turizm|seyahat/.test(
-          text
-        )
+        /uçak|uçuş|otel|tatil|turizm|seyahat|valiz/.test(text)
       ) {
         return "Seyahat";
       }
@@ -185,7 +183,7 @@ export default async function handler(req, res) {
     function isGundem(trend) {
       const text = trend.toLocaleLowerCase("tr-TR");
 
-      return /maç|maçlar|lig|futbol|basketbol|seçim|siyaset|haber|deprem|son dakika|olay/.test(
+      return /maç|maçlar|lig|futbol|basketbol|puan durumu|fikstür|seçim|siyaset|haber|deprem|son dakika|olay/.test(
         text
       );
     }
@@ -193,14 +191,14 @@ export default async function handler(req, res) {
     function hasProductIntent(trend) {
       const text = trend.toLocaleLowerCase("tr-TR");
 
-      return /keten|gömlek|pantolon|şort|elbise|etek|ayakkabı|çanta|telefon|iphone|samsung|xiaomi|tablet|bilgisayar|kulaklık|araba|otomobil|lastik|motor|mobilya|koltuk|masa|kahve|çikolata|gıda|ürün|aksesuar/.test(
+      return /keten|gömlek|pantolon|şort|elbise|etek|tekstil|moda|ayakkabı|çanta|takı|aksesuar|telefon|iphone|samsung|xiaomi|tablet|bilgisayar|kulaklık|araba|otomobil|lastik|motor|mobilya|koltuk|masa|kahve|çikolata|gıda|market|ürün|valiz|forma|eşofman/.test(
         text
       );
     }
 
     function createProductIdea(category, trend) {
       if (category === "Moda / Tekstil") {
-        return trend + " ürünleri, aksesuar veya tekstil";
+        return trend + " odaklı ürün fırsatı";
       }
 
       if (category === "Teknoloji") {
@@ -216,7 +214,7 @@ export default async function handler(req, res) {
       }
 
       if (category === "Gıda") {
-        return trend + " temalı gıda ürünü";
+        return trend + " temalı ticari ürün";
       }
 
       if (category === "Spor") {
@@ -224,7 +222,7 @@ export default async function handler(req, res) {
       }
 
       if (category === "Seyahat") {
-        return trend + " seyahat ürünü veya aksesuar";
+        return trend + " seyahat ürünü";
       }
 
       if (category === "Dijital") {
@@ -238,6 +236,7 @@ export default async function handler(req, res) {
       const productIntent = hasProductIntent(trend);
       const gundem = isGundem(trend);
 
+      // Gündem + ürün olmayan aramalar kesinlikle ticari değil
       if (gundem && !productIntent) {
         return {
           commercial: false,
@@ -248,6 +247,7 @@ export default async function handler(req, res) {
         };
       }
 
+      // Güçlü ticari sinyal
       if (productIntent && score >= 85) {
         return {
           commercial: true,
@@ -258,6 +258,7 @@ export default async function handler(req, res) {
         };
       }
 
+      // Test edilecek fırsat
       if (productIntent && score >= 60) {
         return {
           commercial: true,
@@ -268,6 +269,7 @@ export default async function handler(req, res) {
         };
       }
 
+      // Takip
       if (productIntent) {
         return {
           commercial: true,
@@ -287,15 +289,15 @@ export default async function handler(req, res) {
       };
     }
 
-    const itemBlocks = xml.split(/<item\b/i).slice(1);
+    const itemBlocks = xml
+      .split(/<item\b/i)
+      .slice(1);
 
     const trends = itemBlocks
       .map((block) => {
         const trend = getTag(block, "title");
 
-        if (!trend) {
-          return null;
-        }
+        if (!trend) return null;
 
         const traffic =
           getNamespacedTag(block, "approx_traffic") ||
@@ -303,6 +305,7 @@ export default async function handler(req, res) {
 
         const score = calculateScore(traffic);
         const category = detectCategory(trend);
+
         const result = classifyTrend(
           trend,
           score,
@@ -333,17 +336,20 @@ export default async function handler(req, res) {
 
     const finalTrends = trends.slice(0, 20);
 
-    const opportunityCount = finalTrends.filter(
-      (item) => item.commercial === true
-    ).length;
+    const opportunityCount =
+      finalTrends.filter(
+        (item) => item.commercial === true
+      ).length;
 
-    const sellableCount = finalTrends.filter(
-      (item) => item.signal === "SELL"
-    ).length;
+    const sellableCount =
+      finalTrends.filter(
+        (item) => item.signal === "SELL"
+      ).length;
 
-    const testCount = finalTrends.filter(
-      (item) => item.signal === "TEST"
-    ).length;
+    const testCount =
+      finalTrends.filter(
+        (item) => item.signal === "TEST"
+      ).length;
 
     return res.status(200).json({
       success: true,
@@ -359,11 +365,8 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("RADAR ERROR:", error);
 
-    // ÖNEMLİ:
-    // Artık API 500 vermiyor.
-    // Site çalışmaya devam ediyor.
     return res.status(200).json({
-      success: true,
+      success: false,
       source: "Radar",
       country: "TR",
       updatedAt: new Date().toISOString(),
