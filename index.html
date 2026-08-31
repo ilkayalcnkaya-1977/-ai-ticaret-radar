@@ -693,29 +693,8 @@ function render(){
   // Arama kutusu çalışmaya devam etsin
   return !query || text.includes(query);
 });
-
-    const text = [
-      item.trend,
-      item.category,
-      item.productIdea,
-      item.traffic
-    ]
-    .join(" ");
-
-    if(query && !normalize(text).includes(query)){
-      return false;
-    }
-
-    if(state.filter === "hot"){
-      return isHot(item);
-    }
-
-    if(state.filter === "opportunity"){
-      return isCommercial(item);
-    }
-
-    return true;
-  });
+  
+    
 
   trendCount.textContent = filtered.length;
 
