@@ -218,19 +218,21 @@ export default async function handler(req, res) {
       (a, b) => b.score - a.score
     );
 
-    const opportunityCount =
-      trends.filter(
-        (item) => item.commercial
-      ).length;
+        const finalTrends = trends
+      .filter((item) => item.commercial)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10);
+
+    const opportunityCount = finalTrends.length;
 
     return res.status(200).json({
       success: true,
       source: "Google Trends",
       country: "TR",
       updatedAt: new Date().toISOString(),
-      count: trends.length,
+      count: finalTrends.length,
       opportunityCount,
-      trends
+      trends: finalTrends
     });
 
   } catch (error) {
