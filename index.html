@@ -669,7 +669,30 @@ function render(){
 
   const query = normalize(search.value);
 
-  let filtered = state.trends.filter(item => {
+  let filtered = trends.filter(item => {
+
+  // Sadece gerçekten ticari potansiyeli olan trendleri göster
+  const commercial =
+    item.commercial === true ||
+    Number(item.commercialScore || 0) > 0;
+
+  if (!commercial) return false;
+
+  const text = [
+    item.trend,
+    item.category,
+    item.productIdea,
+    item.product_idea,
+    item.idea,
+    item.traffic
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLocaleLowerCase("tr-TR");
+
+  // Arama kutusu çalışmaya devam etsin
+  return !query || text.includes(query);
+});
 
     const text = [
       item.trend,
