@@ -439,11 +439,14 @@ export default async function handler(req, res) {
       return b.score - a.score;
     });
 
-    const finalTrends =
-  trends
-    .filter(item => item.commercial === true)
-    .slice(0, 20);
-      trends.slice(0, 20);
+    const commercialTrends = trends
+  .filter(item => item.commercial === true);
+
+const finalTrends = commercialTrends.length
+  ? commercialTrends.slice(0, 20)
+  : trends
+      .filter(item => item.signal !== "GUNDEM")
+      .slice(0, 20);
 
     const opportunityCount =
       finalTrends.filter(
