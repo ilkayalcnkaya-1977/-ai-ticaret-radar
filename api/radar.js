@@ -300,10 +300,121 @@ export default async function handler(req, res) {
     // -----------------------------
 
     function classifyTrend(
-      trend,
-      score,
-      category
-    ) {
+  trend,
+  score,
+  category
+) {
+  const productIntent =
+    hasProductIntent(trend);
+
+  const gundem =
+    isGundem(trend);
+
+  // 1. Gerçek gündemleri ticari fırsat sayma
+  if (gundem) {
+    return {
+      commercial: false,
+      signal: "GUNDEM",
+      signalLabel: "SADECE GÜNDEM",
+      commercialScore: 0,
+      productIdea:
+        "Satılabilir ürün sinyali yok"
+    };
+  }
+
+  // 2. Ürün açıkça aranıyorsa
+  // trafik düşük olsa bile radara al
+  if (productIntent) {
+
+    if (score >= 70) {
+      return {
+        commercial: true,
+        signal: "SELL",
+        signalLabel: "SATILABİLİR ÜRÜN",
+        commercialScore: score,
+        productIdea:
+          createProductIdea(
+            category,
+            trend
+          )
+      };
+    }
+
+    if (score >= 40) {
+      return {
+        commercial: true,
+        signal: "TEST",
+        signalLabel:
+          "POTANSİYEL — TEST ET",
+        commercialScore: score,
+        productIdea:
+          createProductIdea(
+            category,
+            trend
+          )
+      };
+    }
+
+    return {
+      commercial: true,
+      signal: "WATCH",
+      signalLabel: "İZLE",
+      commercialScore: score,
+      productIdea:
+        createProductIdea(
+          category,
+          trend
+        )
+    };
+  }
+
+  // 3. Ticari kategori + güçlü trafik
+  if (
+    category !== "Genel Trend" &&
+    score >= 60
+  ) {
+    return {
+      commercial: true,
+      signal: "SELL",
+      signalLabel: "SATILABİLİR ÜRÜN",
+      commercialScore: score,
+      productIdea:
+        createProductIdea(
+          category,
+          trend
+        )
+    };
+  }
+
+  // 4. Ticari kategori + orta trafik
+  if (
+    category !== "Genel Trend" &&
+    score >= 40
+  ) {
+    return {
+      commercial: true,
+      signal: "TEST",
+      signalLabel:
+        "POTANSİYEL — TEST ET",
+      commercialScore: score,
+      productIdea:
+        createProductIdea(
+          category,
+          trend
+        )
+    };
+  }
+
+  // 5. Bunların hiçbiri değilse gündem/ticari dışı
+  return {
+    commercial: false,
+    signal: "NON_COMMERCIAL",
+    signalLabel: "TİCARİ DEĞİL",
+    commercialScore: 0,
+    productIdea:
+      "Satılabilir ürün sinyali bulunamadı"
+  };
+}
       const productIntent =
         hasProductIntent(trend);
 
