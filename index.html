@@ -1239,6 +1239,91 @@
 
   async function loadTrends() {
 
+  statusText.textContent = "Trendler taranıyor...";
+
+  trendList.innerHTML = `
+    <div class="loading">
+      🔄 Güncel Türkiye trendleri alınıyor...
+    </div>
+  `;
+
+  try {
+
+    const controller = new AbortController();
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 12000);
+
+    const response = await fetch(
+      "/api/radar?ts=" + Date.now(),
+      {
+        method: "GET",
+        cache: "no-store",
+        signal: controller.signal,
+        headers: {
+          "Accept": "application/json"
+        }
+      }
+    );
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      throw new Error(
+        "Radar API HTTP " + response.status
+      );
+    }
+
+    const data = await response.json();
+
+    if (!data || !data.success) {
+      throw new Error(
+        data?.message ||
+        data?.error ||
+        "Radar verisi alınamadı"
+      );
+    }
+
+    trends = Array.isArray(data.trends)
+      ? data.trends
+      : [];
+
+    renderTrends(trends);
+
+    statusText.textContent =
+      "Son tarama: şimdi";
+
+  } catch (error) {
+
+    console.error("RADAR HATASI:", error);
+
+    statusText.textContent =
+      "Radar verisi alınamadı";
+
+    const message =
+      error.name === "AbortError"
+        ? "Radar 12 saniye içinde cevap vermedi."
+        : error.message || "Bilinmeyen hata";
+
+    trendList.innerHTML = `
+      <div class="error">
+        <strong>Radar bağlantısı kurulamadı.</strong>
+        <br><br>
+        ${escapeHtml(message)}
+        <br><br>
+        Lütfen sayfayı yenileyip tekrar dene.
+      </div>
+    `;
+
+    trends = [];
+
+    trendCount.textContent = "0";
+    bestScore.textContent = "0";
+    opportunityCount.textContent = "0";
+  }
+}
+
     statusText.textContent =
       "Trendler taranıyor...";
 
