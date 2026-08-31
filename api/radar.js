@@ -440,6 +440,9 @@ export default async function handler(req, res) {
     });
 
     const finalTrends =
+  trends
+    .filter(item => item.commercial === true)
+    .slice(0, 20);
       trends.slice(0, 20);
 
     const opportunityCount =
