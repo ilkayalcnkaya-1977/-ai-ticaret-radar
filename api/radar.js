@@ -1,7 +1,10 @@
 export default async function handler(req, res) {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 15000);
 
     const response = await fetch(
       "https://trends.google.com/trending/rss?geo=TR",
@@ -9,7 +12,7 @@ export default async function handler(req, res) {
         signal: controller.signal,
         headers: {
           "User-Agent":
-            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1",
           Accept:
             "application/rss+xml, application/xml, text/xml, */*"
         }
@@ -27,11 +30,13 @@ export default async function handler(req, res) {
     const xml = await response.text();
 
     if (!xml || !xml.includes("<item")) {
-      throw new Error("Google Trends verisi boş geldi");
+      throw new Error(
+        "Google Trends verisi boş geldi"
+      );
     }
 
     function decodeHtml(value) {
-      return String(value)
+      return String(value || "")
         .replace(/<!\[CDATA\[/gi, "")
         .replace(/\]\]>/gi, "")
         .replace(/&amp;/gi, "&")
@@ -54,25 +59,42 @@ export default async function handler(req, res) {
 
       const match = item.match(regex);
 
-      return match ? decodeHtml(match[1]) : "";
+      return match
+        ? decodeHtml(match[1])
+        : "";
     }
 
+    /*
+      GOOGLE TRENDS RSS
+      Türkiye'deki güncel trendleri al
+    */
+
     const items = [
-      ...xml.matchAll(/<item>([\s\S]*?)<\/item>/gi)
+      ...xml.matchAll(
+        /<item>([\s\S]*?)<\/item>/gi
+      )
     ];
 
     const rawTrends = items
-      .slice(0, 30)
+      .slice(0, 50)
       .map((match, index) => {
         const item = match[1];
 
         return {
           rank: index + 1,
           trend: getTag(item, "title"),
-          traffic: getTag(item, "ht:approx_traffic")
+          traffic: getTag(
+            item,
+            "ht:approx_traffic"
+          )
         };
       })
       .filter(item => item.trend);
+
+
+    /*
+      TİCARİ KELİMELER
+    */
 
     const commercialWords = [
       "ürün",
@@ -83,10 +105,14 @@ export default async function handler(req, res) {
       "satış",
       "mağaza",
       "market",
+
       "telefon",
       "iphone",
       "samsung",
       "xiaomi",
+      "oppo",
+      "huawei",
+
       "ayakkabı",
       "çanta",
       "elbise",
@@ -96,78 +122,143 @@ export default async function handler(req, res) {
       "etek",
       "mont",
       "ceket",
+      "kazak",
+      "tişört",
+      "tshirt",
+      "oversize",
+      "moda",
+
       "parfüm",
       "kozmetik",
+      "makyaj",
+      "cilt",
+      "bakım",
+
       "kahve",
-      "makine",
-      "aksesuar",
+      "çay",
+      "gıda",
+      "market",
+
       "mobilya",
+      "koltuk",
+      "masa",
+      "sandalye",
       "ev",
-      "araba",
-      "otomobil",
-      "elektronik",
+      "dekorasyon",
+
       "laptop",
+      "bilgisayar",
       "tablet",
       "kulaklık",
-      "oyuncak",
+      "televizyon",
+      "elektronik",
+
       "bebek",
-      "mutfak",
-      "dekorasyon",
+      "çocuk",
+      "oyuncak",
+
       "takı",
       "saat",
+      "aksesuar",
+
+      "araba",
+      "otomobil",
+      "motor",
+      "motosiklet",
+
       "spor ayakkabı",
-      "çocuk",
-      "oyun",
-      "bilgisayar"
+      "fitness",
+      "bisiklet"
     ];
+
+
+    /*
+      TİCARİ OLMAYAN / GÜRÜLTÜLÜ TRENDLER
+    */
 
     const noiseWords = [
       "maç",
-      "puan",
+      "maçları",
       "futbol",
       "spor",
+      "transfer",
+      "puan",
+      "skor",
+
       "son dakika",
       "kimdir",
       "kaç yaşında",
-      "transfer",
+      "nereli",
+
       "seçim",
       "siyaset",
       "başbakan",
       "bakan",
+      "cumhurbaşkanı",
+
       "yangın",
       "deprem",
+      "sel",
       "hava durumu",
+
       "ölüm",
       "vefat",
+
       "dizi",
       "film",
+      "sinema",
       "oyuncu",
       "şarkıcı",
       "ünlü",
+      "magazin",
+
       "milli takım",
+
       "sınav",
-      "kpss"
+      "kpss",
+      "yks",
+      "tyt",
+      "ayt",
+      "üniversite",
+
+      "doğa rutkay",
+      "carlos alcaraz",
+      "justin",
+      "beinsports",
+      "bein sports",
+      "trabzonspor",
+      "beşiktaş",
+      "galatasaray",
+      "fenerbahçe"
     ];
 
+
     function getTrafficNumber(value) {
-      const text = String(value)
+      const text = String(value || "")
         .toLowerCase()
         .replace(/\s/g, "")
         .replace(",", ".");
 
-      const match = text.match(/([\d.]+)/);
+      const match =
+        text.match(/([\d.]+)/);
 
-      if (!match) return 0;
+      if (!match) {
+        return 0;
+      }
 
-      const number = parseFloat(match[1]);
+      const number =
+        parseFloat(match[1]);
 
-      if (text.includes("milyon") || text.includes("m")) {
+      if (
+        text.includes("milyon") ||
+        /\d+m/.test(text)
+      ) {
         return number * 1000000;
       }
 
       if (
         text.includes("bin") ||
-        text.includes("k")
+        /\d+k/.test(text)
       ) {
         return number * 1000;
       }
@@ -175,67 +266,134 @@ export default async function handler(req, res) {
       return number;
     }
 
-    function getCommercialHits(text) {
-      const lower = text.toLowerCase();
 
-      return commercialWords.filter(word =>
-        lower.includes(word)
+    function getCommercialHits(text) {
+      const lower =
+        String(text || "").toLowerCase();
+
+      return commercialWords.filter(
+        word => lower.includes(word)
       ).length;
     }
+
 
     function getNoiseHits(text) {
-      const lower = text.toLowerCase();
+      const lower =
+        String(text || "").toLowerCase();
 
-      return noiseWords.filter(word =>
-        lower.includes(word)
+      return noiseWords.filter(
+        word => lower.includes(word)
       ).length;
     }
 
-    function calculateScore(trend, traffic) {
+
+    /*
+      TRAFİK SKORU
+    */
+
+    function getTrafficScore(traffic) {
+      const number =
+        getTrafficNumber(traffic);
+
+      if (number >= 1000000) {
+        return 100;
+      }
+
+      if (number >= 500000) {
+        return 94;
+      }
+
+      if (number >= 200000) {
+        return 88;
+      }
+
+      if (number >= 100000) {
+        return 82;
+      }
+
+      if (number >= 50000) {
+        return 75;
+      }
+
+      if (number >= 10000) {
+        return 68;
+      }
+
+      if (number >= 5000) {
+        return 60;
+      }
+
+      return 50;
+    }
+
+
+    /*
+      TİCARİ RADAR SKORU
+    */
+
+    function calculateScore(
+      trend,
+      traffic
+    ) {
       const commercialHits =
         getCommercialHits(trend);
 
       const noiseHits =
         getNoiseHits(trend);
 
-      const trafficNumber =
-        getTrafficNumber(traffic);
+      let score =
+        getTrafficScore(traffic);
 
-      let trafficScore = 40;
+      /*
+        Ticari kelime bonusu
+      */
 
-      if (trafficNumber >= 1000000) {
-        trafficScore = 100;
-      } else if (trafficNumber >= 500000) {
-        trafficScore = 92;
-      } else if (trafficNumber >= 200000) {
-        trafficScore = 84;
-      } else if (trafficNumber >= 100000) {
-        trafficScore = 76;
-      } else if (trafficNumber >= 50000) {
-        trafficScore = 68;
-      } else if (trafficNumber >= 10000) {
-        trafficScore = 60;
-      } else {
-        trafficScore = 50;
-      }
+      score +=
+        commercialHits * 10;
 
-      let score = trafficScore;
+      /*
+        Ticari olmayan içerik cezası
+      */
 
-      score += commercialHits * 12;
-      score -= noiseHits * 35;
+      score -=
+        noiseHits * 45;
+
+      /*
+        Hiç ticari sinyal yoksa
+        puanı aşağı çek
+      */
 
       if (commercialHits === 0) {
-        score -= 12;
+        score -= 18;
+      }
+
+      /*
+        Maç / siyaset / magazin gibi
+        tamamen gürültülü içerikleri
+        çok daha sert düşür
+      */
+
+      if (noiseHits >= 2) {
+        score -= 30;
       }
 
       return Math.max(
         0,
-        Math.min(100, Math.round(score))
+        Math.min(
+          100,
+          Math.round(score)
+        )
       );
     }
 
+
+    /*
+      KATEGORİ
+    */
+
     function getCategory(trend) {
-      const text = trend.toLowerCase();
+      const text =
+        String(trend || "").toLowerCase();
 
       if (
         [
@@ -246,12 +404,18 @@ export default async function handler(req, res) {
           "etek",
           "mont",
           "ceket",
+          "kazak",
+          "tişört",
+          "tshirt",
           "oversize",
           "moda"
-        ].some(word => text.includes(word))
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Moda";
       }
+
 
       if (
         [
@@ -259,71 +423,120 @@ export default async function handler(req, res) {
           "telefon",
           "samsung",
           "xiaomi",
+          "oppo",
+          "huawei",
           "laptop",
+          "bilgisayar",
           "tablet",
           "kulaklık",
-          "bilgisayar"
-        ].some(word => text.includes(word))
+          "televizyon"
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Elektronik";
       }
 
-      if (
-        [
-          "kahve",
-          "market",
-          "mutfak",
-          "gıda"
-        ].some(word => text.includes(word))
-      ) {
-        return "Gıda / Mutfak";
-      }
-
-      if (
-        [
-          "ev",
-          "mobilya",
-          "dekorasyon"
-        ].some(word => text.includes(word))
-      ) {
-        return "Ev Yaşam";
-      }
 
       if (
         [
           "ayakkabı",
           "çanta",
           "takı",
-          "saat"
-        ].some(word => text.includes(word))
+          "saat",
+          "aksesuar"
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Aksesuar";
       }
 
+
       if (
         [
           "parfüm",
-          "kozmetik"
-        ].some(word => text.includes(word))
+          "kozmetik",
+          "makyaj",
+          "cilt",
+          "bakım"
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Kozmetik";
       }
 
+
+      if (
+        [
+          "kahve",
+          "çay",
+          "gıda",
+          "market"
+        ].some(word =>
+          text.includes(word)
+        )
+      ) {
+        return "Gıda / Mutfak";
+      }
+
+
+      if (
+        [
+          "mobilya",
+          "koltuk",
+          "masa",
+          "sandalye",
+          "ev",
+          "dekorasyon"
+        ].some(word =>
+          text.includes(word)
+        )
+      ) {
+        return "Ev Yaşam";
+      }
+
+
       if (
         [
           "bebek",
-          "oyuncak",
-          "çocuk"
-        ].some(word => text.includes(word))
+          "çocuk",
+          "oyuncak"
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Çocuk / Bebek";
       }
 
+
+      if (
+        [
+          "araba",
+          "otomobil",
+          "motor",
+          "motosiklet"
+        ].some(word =>
+          text.includes(word)
+        )
+      ) {
+        return "Otomotiv";
+      }
+
+
       return "İncelenecek";
     }
 
+
+    /*
+      ÜRÜN FİKRİ
+    */
+
     function getProductIdea(trend) {
-      const text = trend.toLowerCase();
+      const text =
+        String(trend || "").toLowerCase();
+
 
       if (
         [
@@ -333,34 +546,54 @@ export default async function handler(req, res) {
           "elbise",
           "etek",
           "mont",
-          "ceket"
-        ].some(word => text.includes(word))
+          "ceket",
+          "kazak",
+          "tişört",
+          "tshirt"
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Moda ürünü / tekstil";
       }
+
 
       if (
         [
           "iphone",
           "telefon",
           "samsung",
-          "xiaomi"
-        ].some(word => text.includes(word))
+          "xiaomi",
+          "oppo",
+          "huawei"
+        ].some(word =>
+          text.includes(word)
+        )
       ) {
         return "Telefon aksesuarı";
       }
 
-      if (text.includes("ayakkabı")) {
+
+      if (
+        text.includes("ayakkabı")
+      ) {
         return "Ayakkabı / aksesuar";
       }
 
-      if (text.includes("çanta")) {
+
+      if (
+        text.includes("çanta")
+      ) {
         return "Çanta / moda aksesuarı";
       }
 
-      if (text.includes("kahve")) {
+
+      if (
+        text.includes("kahve")
+      ) {
         return "Kahve / kahve ekipmanı";
       }
+
 
       if (
         text.includes("parfüm") ||
@@ -368,6 +601,7 @@ export default async function handler(req, res) {
       ) {
         return "Kozmetik / bakım ürünü";
       }
+
 
       if (
         text.includes("ev") ||
@@ -377,6 +611,7 @@ export default async function handler(req, res) {
         return "Ev yaşam ürünü";
       }
 
+
       if (
         text.includes("bebek") ||
         text.includes("oyuncak")
@@ -384,70 +619,206 @@ export default async function handler(req, res) {
         return "Bebek / çocuk ürünü";
       }
 
+
+      if (
+        text.includes("laptop") ||
+        text.includes("bilgisayar")
+      ) {
+        return "Bilgisayar aksesuarı";
+      }
+
+
+      if (
+        text.includes("araba") ||
+        text.includes("otomobil")
+      ) {
+        return "Otomotiv aksesuarı";
+      }
+
+
       return "Ticari kategori araştırılmalı";
     }
 
-    const scoredTrends = rawTrends
-      .map(item => {
-        const score = calculateScore(
-          item.trend,
-          item.traffic
+
+    /*
+      VERİYİ İŞLE
+    */
+
+    const scoredTrends =
+      rawTrends
+        .map(item => {
+          const score =
+            calculateScore(
+              item.trend,
+              item.traffic
+            );
+
+          const commercialHits =
+            getCommercialHits(
+              item.trend
+            );
+
+          const noiseHits =
+            getNoiseHits(
+              item.trend
+            );
+
+          return {
+            rank: item.rank,
+
+            trend: item.trend,
+
+            traffic:
+              item.traffic || "—",
+
+            score,
+
+            category:
+              getCategory(
+                item.trend
+              ),
+
+            productIdea:
+              getProductIdea(
+                item.trend
+              ),
+
+            commercial:
+              commercialHits > 0,
+
+            noise:
+              noiseHits > 0
+          };
+        });
+
+
+    /*
+      ÖNCE GERÇEK TİCARİ FIRSATLAR
+    */
+
+    const commercialTrends =
+      scoredTrends
+        .filter(item =>
+          item.commercial &&
+          !item.noise &&
+          item.score >= 60
+        )
+        .sort(
+          (a, b) =>
+            b.score - a.score
         );
 
-        return {
-          rank: item.rank,
-          trend: item.trend,
-          traffic: item.traffic || "—",
-          score,
-          category: getCategory(item.trend),
-          productIdea: getProductIdea(item.trend),
-          commercial:
-            getCommercialHits(item.trend) > 0
-        };
-      })
-      .sort((a, b) => b.score - a.score);
 
-    const topTrends =
-      scoredTrends.slice(0, 10);
+    /*
+      TİCARİ SONUÇ YETERSİZSE
+      NORMAL TRENDLERDEN TAMAMLA
+    */
 
-    const bestScore =
-      topTrends.length > 0
-        ? topTrends[0].score
+    const otherTrends =
+      scoredTrends
+        .filter(item =>
+          !commercialTrends.some(
+            commercial =>
+              commercial.trend ===
+              item.trend
+          )
+        )
+        .sort(
+          (a, b) =>
+            b.score - a.score
+        );
+
+
+    const topTrends = [
+      ...commercialTrends,
+      ...otherTrends
+    ]
+      .slice(0, 10);
+
+
+    /*
+      RADAR İSTATİSTİKLERİ
+    */
+
+    const radarScore =
+      topTrends.length
+        ? Math.max(
+            ...topTrends.map(
+              item =>
+                Number(item.score) || 0
+            )
+          )
         : 0;
+
 
     const opportunityCount =
       topTrends.filter(item =>
-        item.commercial && item.score >= 65
+        item.commercial &&
+        !item.noise &&
+        item.score >= 65
       ).length;
+
+
+    /*
+      CACHE
+      5 dakikada bir güncellensin
+    */
 
     res.setHeader(
       "Cache-Control",
       "s-maxage=300, stale-while-revalidate=600"
     );
 
+
     return res.status(200).json({
       success: true,
+
       country: "TR",
-      source: "Google Trends",
-      updatedAt: new Date().toISOString(),
-      count: topTrends.length,
-      radarScore: bestScore,
+
+      source:
+        "Google Trends Türkiye",
+
+      updatedAt:
+        new Date().toISOString(),
+
+      count:
+        topTrends.length,
+
+      radarScore,
+
       opportunityCount,
-      trends: topTrends
+
+      trends:
+        topTrends
     });
 
+
   } catch (error) {
-    console.error("RADAR ERROR:", error);
+
+    console.error(
+      "RADAR ERROR:",
+      error
+    );
+
 
     return res.status(500).json({
+
       success: false,
-      error: "Radar verisi alınamadı",
+
+      error:
+        "Radar verisi alınamadı",
+
       message:
         error?.name === "AbortError"
           ? "Google Trends zaman aşımına uğradı"
-          : error?.message || "Bilinmeyen hata",
-      updatedAt: new Date().toISOString(),
+          : error?.message ||
+            "Bilinmeyen hata",
+
+      updatedAt:
+        new Date().toISOString(),
+
       trends: []
+
     });
   }
 }
