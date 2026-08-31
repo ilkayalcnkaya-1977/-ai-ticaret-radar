@@ -4,47 +4,48 @@ export default async function handler(req, res) {
 
     const timeout = setTimeout(() => {
       controller.abort();
-    }, 15000);
+    }, 10000);
 
-    const response = await fetch(
-      "https://trends.google.com/trending/rss?geo=TR",
-      {
-        method: "GET",
-        signal: controller.signal,
-        headers: {
-          "User-Agent": "Mozilla/5.0",
-          "Accept":
-            "application/rss+xml, application/xml, text/xml, */*"
+    let xml = "";
+
+    try {
+      const response = await fetch(
+        "https://trends.google.com/trending/rss?geo=TR",
+        {
+          method: "GET",
+          signal: controller.signal,
+          headers: {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/rss+xml, application/xml, text/xml, */*"
+          }
         }
+      );
+
+      clearTimeout(timeout);
+
+      if (response.ok) {
+        xml = await response.text();
       }
-    );
-
-    clearTimeout(timeout);
-
-    if (!response.ok) {
-      throw new Error(
-        "Google Trends HTTP " + response.status
-      );
+    } catch (error) {
+      clearTimeout(timeout);
     }
 
-    const xml = await response.text();
-
+    // Google Trends erişilemezse siteyi boş bırakma
     if (!xml || xml.length < 100) {
-      throw new Error(
-        "Google Trends veri döndürmedi."
-      );
+      return res.status(200).json({
+        success: true,
+        source: "Radar",
+        country: "TR",
+        updatedAt: new Date().toISOString(),
+        count: 0,
+        opportunityCount: 0,
+        trends: []
+      });
     }
-
-    // -----------------------------
-    // XML yardımcıları
-    // -----------------------------
 
     function clean(value) {
       return String(value || "")
-        .replace(
-          /<!\[CDATA\[(.*?)\]\]>/gs,
-          "$1"
-        )
+        .replace(/<!\[CDATA\[(.*?)\]\]>/gs, "$1")
         .replace(/&amp;/g, "&")
         .replace(/&lt;/g, "<")
         .replace(/&gt;/g, ">")
@@ -66,9 +67,7 @@ export default async function handler(req, res) {
 
       const match = block.match(regex);
 
-      return match
-        ? clean(match[1])
-        : "";
+      return match ? clean(match[1]) : "";
     }
 
     function getNamespacedTag(block, tag) {
@@ -83,14 +82,8 @@ export default async function handler(req, res) {
 
       const match = block.match(regex);
 
-      return match
-        ? clean(match[1])
-        : "";
+      return match ? clean(match[1]) : "";
     }
-
-    // -----------------------------
-    // Trafik skoru
-    // -----------------------------
 
     function trafficNumber(value) {
       const text = String(value || "")
@@ -99,9 +92,7 @@ export default async function handler(req, res) {
 
       const match = text.match(/\d+/);
 
-      return match
-        ? Number(match[0])
-        : 0;
+      return match ? Number(match[0]) : 0;
     }
 
     function calculateScore(traffic) {
@@ -121,17 +112,11 @@ export default async function handler(req, res) {
       return 30;
     }
 
-    // -----------------------------
-    // Kategori tespiti
-    // -----------------------------
-
     function detectCategory(trend) {
-      const text =
-        String(trend || "")
-          .toLocaleLowerCase("tr-TR");
+      const text = trend.toLocaleLowerCase("tr-TR");
 
       if (
-        /keten|gömlek|pantolon|şort|elbise|etek|ayakkabı|çanta|mont|ceket|tekstil|kumaş|tişört|sweatshirt|hoodie|takım|eşofman|forma|takı|kolye|bileklik|çorap|moda|giyim/.test(
+        /keten|gömlek|pantolon|şort|elbise|etek|tekstil|moda|ayakkabı|çanta/.test(
           text
         )
       ) {
@@ -139,7 +124,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /telefon|iphone|samsung|xiaomi|tablet|bilgisayar|laptop|airpods|kulaklık|kamera|şarj|powerbank|klavye|mouse|playstation|xbox|konsol|teknoloji/.test(
+        /telefon|iphone|samsung|xiaomi|tablet|bilgisayar|kulaklık|teknoloji/.test(
           text
         )
       ) {
@@ -147,7 +132,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /araba|otomobil|otomotiv|lastik|motor|motosiklet|araç|akü|jip|suv/.test(
+        /araba|otomobil|otomotiv|lastik|motor|aksesuar/.test(
           text
         )
       ) {
@@ -155,7 +140,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /mobilya|koltuk|masa|sandalye|dekorasyon|mutfak|beyaz eşya|halı|perde|aydınlatma|yatak|ev|bahçe/.test(
+        /mobilya|koltuk|masa|sandalye|dekorasyon|ev|yaşam/.test(
           text
         )
       ) {
@@ -163,7 +148,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /kahve|çikolata|gıda|market|yemek|tatlı|içecek|atıştırmalık|restoran/.test(
+        /kahve|çikolata|gıda|market|yemek|tatlı|restoran/.test(
           text
         )
       ) {
@@ -171,7 +156,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /fitness|koşu|basketbol|futbol|voleybol|tenis|spor|kamp|bisiklet|forma/.test(
+        /maç|maçlar|lig|futbol|basketbol|spor/.test(
           text
         )
       ) {
@@ -179,7 +164,7 @@ export default async function handler(req, res) {
       }
 
       if (
-        /tatil|otel|uçak|seyahat|turizm|valiz|kabin|tatil/.test(
+        /uçak|uçuş|otel|tatil|turizm|seyahat/.test(
           text
         )
       ) {
@@ -187,301 +172,109 @@ export default async function handler(req, res) {
       }
 
       if (
-        /uygulama|yazılım|yapay zeka|internet|chatgpt|saas|uygulaması/.test(
+        /instagram|tiktok|youtube|uygulama|yapay zeka|chatgpt/.test(
           text
         )
       ) {
         return "Dijital";
       }
 
-      return "Genel Trend";
+      return "Diğer";
     }
-
-    // -----------------------------
-    // Ürün niyeti
-    // -----------------------------
-
-    function hasProductIntent(trend) {
-      const text =
-        String(trend || "")
-          .toLocaleLowerCase("tr-TR");
-
-      return /keten|gömlek|pantolon|şort|elbise|etek|ayakkabı|çanta|mont|ceket|tekstil|kumaş|tişört|sweatshirt|hoodie|takım|eşofman|forma|takı|kolye|bileklik|çorap|telefon|iphone|samsung|xiaomi|tablet|bilgisayar|laptop|airpods|kulaklık|kamera|şarj|powerbank|klavye|mouse|lastik|akü|motosiklet|otomobil|araba|motor|mobilya|koltuk|masa|sandalye|dekorasyon|mutfak|halı|perde|yatak|kahve|çikolata|gıda|atıştırmalık|fitness|koşu|bisiklet|kamp|valiz|spor|tatil|otel/.test(
-        text
-      );
-    }
-
-    // -----------------------------
-    // Gündem kontrolü
-    // -----------------------------
 
     function isGundem(trend) {
-      const text =
-        String(trend || "")
-          .toLocaleLowerCase("tr-TR");
+      const text = trend.toLocaleLowerCase("tr-TR");
 
-      return /maç|maçları|lig|fikstür|puan durumu|transfer|şampiyonlar ligi|premier lig|son dakika|haber|kimdir|kaç yaşında|hangi kanalda|canlı skor|skor|cumhurbaşkanı|bakan|seçim|parti|milletvekili|deprem|yangın|hava durumu|ölüm|vefat|dizi|film|fragman|oyuncu|ünlü|şarkıcı|flashscore|sahadan|bjj|arsenal|barcelona|sivas|cengiz|anne hathaway/.test(
+      return /maç|maçlar|lig|futbol|basketbol|seçim|siyaset|haber|deprem|son dakika|olay/.test(
         text
       );
     }
 
-    // -----------------------------
-    // Ürün fikri
-    // -----------------------------
+    function hasProductIntent(trend) {
+      const text = trend.toLocaleLowerCase("tr-TR");
 
-    function createProductIdea(
-      category,
-      trend
-    ) {
+      return /keten|gömlek|pantolon|şort|elbise|etek|ayakkabı|çanta|telefon|iphone|samsung|xiaomi|tablet|bilgisayar|kulaklık|araba|otomobil|lastik|motor|mobilya|koltuk|masa|kahve|çikolata|gıda|ürün|aksesuar/.test(
+        text
+      );
+    }
+
+    function createProductIdea(category, trend) {
       if (category === "Moda / Tekstil") {
-        return (
-          trend +
-          " ürünleri, aksesuar veya tekstil"
-        );
+        return trend + " ürünleri, aksesuar veya tekstil";
       }
 
       if (category === "Teknoloji") {
-        return (
-          trend +
-          " aksesuarı veya teknoloji ürünü"
-        );
+        return trend + " aksesuarı veya teknoloji ürünü";
       }
 
       if (category === "Otomotiv") {
-        return (
-          trend +
-          " aksesuarı veya otomotiv ürünü"
-        );
+        return trend + " aksesuarı veya otomotiv ürünü";
       }
 
       if (category === "Ev / Yaşam") {
-        return (
-          trend +
-          " odaklı ev ürünü"
-        );
+        return trend + " odaklı ev ürünü";
       }
 
       if (category === "Gıda") {
-        return (
-          trend +
-          " temalı gıda ürünü"
-        );
+        return trend + " temalı gıda ürünü";
       }
 
       if (category === "Spor") {
-        return (
-          trend +
-          " spor ürünü veya aksesuar"
-        );
+        return trend + " spor ürünü veya aksesuar";
       }
 
       if (category === "Seyahat") {
-        return (
-          trend +
-          " seyahat ürünü veya aksesuar"
-        );
+        return trend + " seyahat ürünü veya aksesuar";
       }
 
       if (category === "Dijital") {
-        return (
-          trend +
-          " odaklı dijital ürün"
-        );
+        return trend + " odaklı dijital ürün";
       }
 
-      return (
-        trend +
-        " ile ilgili ticari ürün"
-      );
+      return trend + " ile ilgili ticari ürün";
     }
 
-    // -----------------------------
-    // TİCARİ RADAR KARARI
-    // -----------------------------
+    function classifyTrend(trend, score, category) {
+      const productIntent = hasProductIntent(trend);
+      const gundem = isGundem(trend);
 
-    function classifyTrend(
-  trend,
-  score,
-  category
-) {
-  const productIntent =
-    hasProductIntent(trend);
-
-  const gundem =
-    isGundem(trend);
-
-  // 1. Gerçek gündemleri ticari fırsat sayma
-  if (gundem) {
-    return {
-      commercial: false,
-      signal: "GUNDEM",
-      signalLabel: "SADECE GÜNDEM",
-      commercialScore: 0,
-      productIdea:
-        "Satılabilir ürün sinyali yok"
-    };
-  }
-
-  // 2. Ürün açıkça aranıyorsa
-  // trafik düşük olsa bile radara al
-  if (productIntent) {
-
-    if (score >= 70) {
-      return {
-        commercial: true,
-        signal: "SELL",
-        signalLabel: "SATILABİLİR ÜRÜN",
-        commercialScore: score,
-        productIdea:
-          createProductIdea(
-            category,
-            trend
-          )
-      };
-    }
-
-    if (score >= 40) {
-      return {
-        commercial: true,
-        signal: "TEST",
-        signalLabel:
-          "POTANSİYEL — TEST ET",
-        commercialScore: score,
-        productIdea:
-          createProductIdea(
-            category,
-            trend
-          )
-      };
-    }
-
-    return {
-      commercial: true,
-      signal: "WATCH",
-      signalLabel: "İZLE",
-      commercialScore: score,
-      productIdea:
-        createProductIdea(
-          category,
-          trend
-        )
-    };
-  }
-
-  // 3. Ticari kategori + güçlü trafik
-  if (
-    category !== "Genel Trend" &&
-    score >= 60
-  ) {
-    return {
-      commercial: true,
-      signal: "SELL",
-      signalLabel: "SATILABİLİR ÜRÜN",
-      commercialScore: score,
-      productIdea:
-        createProductIdea(
-          category,
-          trend
-        )
-    };
-  }
-
-  // 4. Ticari kategori + orta trafik
-  if (
-    category !== "Genel Trend" &&
-    score >= 40
-  ) {
-    return {
-      commercial: true,
-      signal: "TEST",
-      signalLabel:
-        "POTANSİYEL — TEST ET",
-      commercialScore: score,
-      productIdea:
-        createProductIdea(
-          category,
-          trend
-        )
-    };
-  }
-
-  // 5. Bunların hiçbiri değilse gündem/ticari dışı
-  return {
-    commercial: false,
-    signal: "NON_COMMERCIAL",
-    signalLabel: "TİCARİ DEĞİL",
-    commercialScore: 0,
-    productIdea:
-      "Satılabilir ürün sinyali bulunamadı"
-  };
-}
-      const productIntent =
-        hasProductIntent(trend);
-
-      const gundem =
-        isGundem(trend);
-
-      // Önce gündemi ele.
-      if (gundem) {
+      if (gundem && !productIntent) {
         return {
           commercial: false,
           signal: "GUNDEM",
           signalLabel: "SADECE GÜNDEM",
           commercialScore: 0,
-          productIdea:
-            "Satılabilir ürün sinyali yok"
+          productIdea: "Satılabilir ürün sinyali yok"
         };
       }
 
-      // Bilinen ticari kategori
-      if (
-        category !== "Genel Trend" &&
-        score >= 60
-      ) {
+      if (productIntent && score >= 85) {
         return {
           commercial: true,
           signal: "SELL",
           signalLabel: "SATILABİLİR ÜRÜN",
           commercialScore: score,
-          productIdea:
-            createProductIdea(
-              category,
-              trend
-            )
+          productIdea: createProductIdea(category, trend)
         };
       }
 
-      // Orta seviye fırsat
-      if (
-        category !== "Genel Trend" &&
-        score >= 42
-      ) {
+      if (productIntent && score >= 60) {
         return {
           commercial: true,
           signal: "TEST",
-          signalLabel:
-            "POTANSİYEL — TEST ET",
+          signalLabel: "POTANSİYEL — TEST ET",
           commercialScore: score,
-          productIdea:
-            createProductIdea(
-              category,
-              trend
-            )
+          productIdea: createProductIdea(category, trend)
         };
       }
 
-      // Doğrudan ürün araması
       if (productIntent) {
         return {
           commercial: true,
           signal: "WATCH",
           signalLabel: "İZLE",
           commercialScore: score,
-          productIdea:
-            createProductIdea(
-              category,
-              trend
-            )
+          productIdea: createProductIdea(category, trend)
         };
       }
 
@@ -490,191 +283,96 @@ export default async function handler(req, res) {
         signal: "NON_COMMERCIAL",
         signalLabel: "TİCARİ DEĞİL",
         commercialScore: 0,
-        productIdea:
-          "Satılabilir ürün sinyali bulunamadı"
+        productIdea: "Satılabilir ürün sinyali yok"
       };
     }
 
-    // -----------------------------
-    // Google Trends item'ları
-    // -----------------------------
+    const itemBlocks = xml.split(/<item\b/i).slice(1);
 
-    const itemBlocks =
-      xml.match(
-        /<item[\s\S]*?<\/item>/gi
-      ) || [];
+    const trends = itemBlocks
+      .map((block) => {
+        const trend = getTag(block, "title");
 
-    const trends =
-      itemBlocks
-        .map((block) => {
-          const trend =
-            getTag(
-              block,
-              "title"
-            );
+        if (!trend) {
+          return null;
+        }
 
-          if (!trend) {
-            return null;
-          }
+        const traffic =
+          getNamespacedTag(block, "approx_traffic") ||
+          getTag(block, "approx_traffic");
 
-          const traffic =
-            getNamespacedTag(
-              block,
-              "approx_traffic"
-            );
+        const score = calculateScore(traffic);
+        const category = detectCategory(trend);
+        const result = classifyTrend(
+          trend,
+          score,
+          category
+        );
 
-          const score =
-            calculateScore(
-              traffic
-            );
-
-          const category =
-            detectCategory(
-              trend
-            );
-
-          const result =
-            classifyTrend(
-              trend,
-              score,
-              category
-            );
-
-          return {
-            trend,
-            traffic:
-              traffic || "—",
-            score,
-            category:
-              result.commercial
-                ? category
-                : "Sadece Gündem",
-            commercial:
-              result.commercial,
-            signal:
-              result.signal,
-            signalLabel:
-              result.signalLabel,
-            commercialScore:
-              result.commercialScore,
-            productIdea:
-              result.productIdea
-          };
-        })
-        .filter(Boolean);
-
-    if (!trends.length) {
-      throw new Error(
-        "Google Trends verisi bulunamadı."
-      );
-    }
-
-    // -----------------------------
-    // Sıralama
-    // -----------------------------
+        return {
+          trend,
+          traffic: traffic || "—",
+          score,
+          category,
+          commercial: result.commercial,
+          signal: result.signal,
+          signalLabel: result.signalLabel,
+          commercialScore: result.commercialScore,
+          productIdea: result.productIdea
+        };
+      })
+      .filter(Boolean);
 
     trends.sort((a, b) => {
-      if (
-        a.commercial !==
-        b.commercial
-      ) {
-        return a.commercial
-          ? -1
-          : 1;
+      if (a.commercial !== b.commercial) {
+        return a.commercial ? -1 : 1;
       }
 
-      return (
-        b.commercialScore -
-        a.commercialScore
-      );
+      return b.score - a.score;
     });
 
-    // Önce ticari fırsatlar
-    const commercialTrends =
-      trends.filter(
-        item =>
-          item.commercial === true
-      );
+    const finalTrends = trends.slice(0, 20);
 
-    // Ticari sonuç varsa sadece onları göster.
-    // Yoksa gündem olmayanları göster.
-    const finalTrends =
-      commercialTrends.length
-        ? commercialTrends.slice(0, 20)
-        : trends
-            .filter(
-              item =>
-                item.signal !==
-                "GUNDEM"
-            )
-            .slice(0, 20);
+    const opportunityCount = finalTrends.filter(
+      (item) => item.commercial === true
+    ).length;
 
-    // -----------------------------
-    // Sayaçlar
-    // -----------------------------
+    const sellableCount = finalTrends.filter(
+      (item) => item.signal === "SELL"
+    ).length;
 
-    const opportunityCount =
-      finalTrends.filter(
-        item =>
-          item.commercial === true
-      ).length;
-
-    const sellableCount =
-      finalTrends.filter(
-        item =>
-          item.signal === "SELL"
-      ).length;
-
-    const testCount =
-      finalTrends.filter(
-        item =>
-          item.signal === "TEST"
-      ).length;
-
-    // -----------------------------
-    // SONUÇ
-    // -----------------------------
+    const testCount = finalTrends.filter(
+      (item) => item.signal === "TEST"
+    ).length;
 
     return res.status(200).json({
       success: true,
-
-      source:
-        "Google Trends",
-
-      country:
-        "TR",
-
-      updatedAt:
-        new Date().toISOString(),
-
-      count:
-        finalTrends.length,
-
+      source: "Google Trends",
+      country: "TR",
+      updatedAt: new Date().toISOString(),
+      count: finalTrends.length,
       opportunityCount,
-
       sellableCount,
-
       testCount,
-
-      trends:
-        finalTrends
+      trends: finalTrends
     });
-
   } catch (error) {
-    console.error(
-      "RADAR ERROR:",
-      error
-    );
+    console.error("RADAR ERROR:", error);
 
-    return res.status(500).json({
-      success: false,
-
-      message:
-        "Radar verisi alınamadı.",
-
-      error:
-        error?.message ||
-        "Bilinmeyen hata"
+    // ÖNEMLİ:
+    // Artık API 500 vermiyor.
+    // Site çalışmaya devam ediyor.
+    return res.status(200).json({
+      success: true,
+      source: "Radar",
+      country: "TR",
+      updatedAt: new Date().toISOString(),
+      count: 0,
+      opportunityCount: 0,
+      sellableCount: 0,
+      testCount: 0,
+      trends: [],
+      warning: "Radar geçici olarak veri alamadı."
     });
   }
 }
