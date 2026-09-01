@@ -305,12 +305,7 @@ export default async function handler(req, res) {
   // --------------------------------------------------
 
   function hasProductIntent(trend) {
-    const text = trend.toLocaleLowerCase("tr-TR");
-
-    return /keten|gömlek|pantolon|şort|elbise|etek|tekstil|moda|ayakkabı|çanta|takı|aksesuar|telefon|iphone|samsung|xiaomi|tablet|bilgisayar|kulaklık|araba|otomobil|lastik|motor|mobilya|koltuk|masa|kahve|çikolata|gıda|market|ürün|valiz|forma|eşofman|spor|fitness|koşu/.test(
-      text
-    );
-  }
+    const text = trend.toLocaleLowerCase("tr-
 
   function isNews(trend) {
     const text = trend.toLocaleLowerCase("tr-TR");
@@ -320,27 +315,7 @@ export default async function handler(req, res) {
     );
   }
 
-  function createProductIdea(category, trend) {
-    if (category === "Moda / Tekstil") {
-      return trend + " odaklı ürün fırsatı";
-    }
-
-    if (category === "Teknoloji") {
-      return trend + " aksesuarı veya teknoloji ürünü";
-    }
-
-    if (category === "Otomotiv") {
-      return trend + " aksesuarı veya otomotiv ürünü";
-    }
-
-    if (category === "Ev / Yaşam") {
-      return trend + " odaklı ev ürünü";
-    }
-
-    if (category === "Gıda") {
-      return trend + " temalı ticari ürün";
-    }
-
+  function
     if (category === "Spor") {
       return trend + " spor ürünü veya aksesuar";
     }
