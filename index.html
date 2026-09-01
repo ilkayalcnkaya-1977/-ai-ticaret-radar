@@ -669,7 +669,7 @@ function render(){
 
   const query = normalize(search.value);
 
-  let filtered = trends.filter(item => {
+  let filtered = state.trends.filter(item => {
 
   // Sadece gerçekten ticari potansiyeli olan trendleri göster
   const commercial =
