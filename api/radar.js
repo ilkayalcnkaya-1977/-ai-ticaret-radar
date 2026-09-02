@@ -1,44 +1,7 @@
 export default async function handler(req, res) {
   const now = new Date().toISOString();
 
-  // --------------------------------------------------
-  // 1. GÜVENLİ YEDEK TRENDLER
-  // --------------------------------------------------
-
   const fallbackTrends = [
-    {
-      trend: "keten gömlek",
-      traffic: "5000+",
-      score: 72,
-      category: "Moda / Tekstil",
-      commercial: true,
-      signal: "TEST",
-      signalLabel: "POTANSİYEL — TEST ET",
-      commercialScore: 72,
-      productIdea: "Keten gömlek"
-    },
-    {
-      trend: "keten pantolon",
-      traffic: "2000+",
-      score: 65,
-      category: "Moda / Tekstil",
-      commercial: true,
-      signal: "TEST",
-      signalLabel: "POTANSİYEL — TEST ET",
-      commercialScore: 65,
-      productIdea: "Keten pantolon"
-    },
-    {
-      trend: "keten şort",
-      traffic: "1000+",
-      score: 58,
-      category: "Moda / Tekstil",
-      commercial: true,
-      signal: "WATCH",
-      signalLabel: "İZLE",
-      commercialScore: 58,
-      productIdea: "Keten şort"
-    },
     {
       trend: "spor ayakkabı",
       traffic: "10000+",
@@ -59,7 +22,7 @@ export default async function handler(req, res) {
       signal: "TEST",
       signalLabel: "POTANSİYEL — TEST ET",
       commercialScore: 72,
-      productIdea: "Telefon aksesuarı veya teknoloji ürünü"
+      productIdea: "Telefon aksesuarı"
     },
     {
       trend: "çanta",
@@ -73,15 +36,15 @@ export default async function handler(req, res) {
       productIdea: "Çanta"
     },
     {
-      trend: "yazlık elbise",
-      traffic: "2000+",
-      score: 65,
-      category: "Moda / Tekstil",
+      trend: "kahve",
+      traffic: "10000+",
+      score: 80,
+      category: "Gıda",
       commercial: true,
       signal: "TEST",
       signalLabel: "POTANSİYEL — TEST ET",
-      commercialScore: 65,
-      productIdea: "Yazlık elbise"
+      commercialScore: 80,
+      productIdea: "Kahve temalı ticari ürün"
     },
     {
       trend: "ev dekorasyon",
@@ -95,17 +58,6 @@ export default async function handler(req, res) {
       productIdea: "Ev dekorasyon ürünü"
     },
     {
-      trend: "kahve",
-      traffic: "10000+",
-      score: 80,
-      category: "Gıda",
-      commercial: true,
-      signal: "TEST",
-      signalLabel: "POTANSİYEL — TEST ET",
-      commercialScore: 80,
-      productIdea: "Kahve temalı ticari ürün"
-    },
-    {
       trend: "valiz",
       traffic: "1000+",
       score: 58,
@@ -117,55 +69,6 @@ export default async function handler(req, res) {
       productIdea: "Valiz veya seyahat ürünü"
     }
   ];
-
-  // --------------------------------------------------
-  // 2. GOOGLE TRENDS RSS
-  // --------------------------------------------------
-
-  async function getGoogleTrends() {
-    const controller = new AbortController();
-
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 8000);
-
-    try {
-      const response = await fetch(
-        "https://trends.google.com/trending/rss?geo=TR",
-        {
-          method: "GET",
-          headers: {
-            "User-Agent":
-              "Mozilla/5.0 (compatible; AI-Ticaret-Radar/1.0)",
-            "Accept":
-              "application/rss+xml, application/xml, text/xml, */*"
-          },
-          signal: controller.signal
-        }
-      );
-
-      clearTimeout(timeout);
-
-      if (!response.ok) {
-        return [];
-      }
-
-      const xml = await response.text();
-
-      if (!xml || xml.length < 100) {
-        return [];
-      }
-
-      return parseRSS(xml);
-    } catch (error) {
-      clearTimeout(timeout);
-      return [];
-    }
-  }
-
-  // --------------------------------------------------
-  // 3. RSS PARSER
-  // --------------------------------------------------
 
   function clean(value) {
     return String(value || "")
@@ -181,11 +84,7 @@ export default async function handler(req, res) {
 
   function getTag(block, tag) {
     const regex = new RegExp(
-      "<" +
-        tag +
-        "[^>]*>([\\s\\S]*?)<\\/" +
-        tag +
-        ">",
+      "<" + tag + "[^>]*>([\\s\\S]*?)</" + tag + ">",
       "i"
     );
 
@@ -195,14 +94,11 @@ export default async function handler(req, res) {
   }
 
   function getTraffic(block) {
-    const namespaced =
-      block.match(
-        /<(?:[a-zA-Z0-9_-]+:)?approx_traffic[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?approx_traffic>/i
-      );
+    const match = block.match(
+      /<(?:[a-zA-Z0-9_-]+:)?approx_traffic[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?approx_traffic>/i
+    );
 
-    return namespaced
-      ? clean(namespaced[1])
-      : "";
+    return match ? clean(match[1]) : "";
   }
 
   function trafficNumber(value) {
@@ -232,10 +128,6 @@ export default async function handler(req, res) {
     return 30;
   }
 
-  // --------------------------------------------------
-  // 4. KATEGORİ
-  // --------------------------------------------------
-
   function detectCategory(trend) {
     const text = trend.toLocaleLowerCase("tr-TR");
 
@@ -255,57 +147,40 @@ export default async function handler(req, res) {
       return "Teknoloji";
     }
 
-    if (
-      /araba|otomobil|otomotiv|lastik|motor/.test(text)
-    ) {
+    if (/araba|otomobil|otomotiv|lastik|motor/.test(text)) {
       return "Otomotiv";
     }
 
-    if (
-      /mobilya|koltuk|masa|sandalye|dekorasyon|ev|yaşam/.test(
-        text
-      )
-    ) {
+    if (/mobilya|koltuk|masa|sandalye|dekorasyon|ev|yaşam/.test(text)) {
       return "Ev / Yaşam";
     }
 
-    if (
-      /kahve|çikolata|gıda|market|yemek|tatlı|restoran/.test(
-        text
-      )
-    ) {
+    if (/kahve|çikolata|gıda|market|yemek|tatlı|restoran/.test(text)) {
       return "Gıda";
     }
 
-    if (
-      /spor|forma|eşofman|fitness|koşu/.test(text)
-    ) {
+    if (/spor|forma|eşofman|fitness|koşu/.test(text)) {
       return "Spor";
     }
 
-    if (
-      /uçak|uçuş|otel|tatil|turizm|seyahat|valiz/.test(text)
-    ) {
+    if (/uçak|uçuş|otel|tatil|turizm|seyahat|valiz/.test(text)) {
       return "Seyahat";
     }
 
-    if (
-      /instagram|tiktok|youtube|uygulama|yapay zeka|chatgpt/.test(
-        text
-      )
-    ) {
+    if (/instagram|tiktok|youtube|uygulama|yapay zeka|chatgpt/.test(text)) {
       return "Dijital";
     }
 
     return "Diğer";
   }
 
-  // --------------------------------------------------
-  // 5. TİCARİ ÜRÜN KONTROLÜ
-  // --------------------------------------------------
-
   function hasProductIntent(trend) {
-    const text = trend.toLocaleLowerCase("tr-
+    const text = trend.toLocaleLowerCase("tr-TR");
+
+    return /ürün|ayakkabı|çanta|gömlek|pantolon|şort|elbise|etek|takı|aksesuar|telefon|iphone|samsung|xiaomi|tablet|bilgisayar|kulaklık|araba|otomobil|lastik|motor|mobilya|koltuk|masa|sandalye|dekorasyon|kahve|çikolata|gıda|yemek|tatlı|spor|forma|eşofman|fitness|koşu|otel|tatil|seyahat|valiz/.test(
+      text
+    );
+  }
 
   function isNews(trend) {
     const text = trend.toLocaleLowerCase("tr-TR");
@@ -315,7 +190,27 @@ export default async function handler(req, res) {
     );
   }
 
-  function
+  function createProductIdea(category, trend) {
+    if (category === "Moda / Tekstil") {
+      return trend + " ürünü veya aksesuar";
+    }
+
+    if (category === "Teknoloji") {
+      return trend + " aksesuarı";
+    }
+
+    if (category === "Otomotiv") {
+      return trend + " aksesuarı veya bakım ürünü";
+    }
+
+    if (category === "Ev / Yaşam") {
+      return trend + " ürünü";
+    }
+
+    if (category === "Gıda") {
+      return trend + " ürünü";
+    }
+
     if (category === "Spor") {
       return trend + " spor ürünü veya aksesuar";
     }
@@ -326,10 +221,6 @@ export default async function handler(req, res) {
 
     return trend + " ile ilgili ticari ürün";
   }
-
-  // --------------------------------------------------
-  // 6. TREND SINIFLANDIRMA
-  // --------------------------------------------------
 
   function classifyTrend(trend, score, category) {
     const product = hasProductIntent(trend);
@@ -383,14 +274,8 @@ export default async function handler(req, res) {
     };
   }
 
-  // --------------------------------------------------
-  // 7. RSS'TEN TRENDLERİ ÇIKAR
-  // --------------------------------------------------
-
   function parseRSS(xml) {
-    const blocks = xml
-      .split(/<item\b/i)
-      .slice(1);
+    const blocks = xml.split(/<item\b/i).slice(1);
 
     return blocks
       .map((block) => {
@@ -401,16 +286,10 @@ export default async function handler(req, res) {
         }
 
         const traffic = getTraffic(block);
-
         const score = calculateScore(traffic);
-
         const category = detectCategory(trend);
 
-        const result = classifyTrend(
-          trend,
-          score,
-          category
-        );
+        const result = classifyTrend(trend, score, category);
 
         return {
           trend,
@@ -427,85 +306,110 @@ export default async function handler(req, res) {
       .filter(Boolean);
   }
 
-  // --------------------------------------------------
-  // 8. GERÇEK VERİYİ AL
-  // --------------------------------------------------
+  async function getGoogleTrends() {
+    const controller = new AbortController();
 
-  const liveTrends = await getGoogleTrends();
+    const timeout = setTimeout(() => {
+      controller.abort();
+    }, 8000);
 
-  let trends =
-    liveTrends.length > 0
-      ? liveTrends
-      : fallbackTrends;
+    try {
+      const response = await fetch(
+        "https://trends.google.com/trending/rss?geo=TR",
+        {
+          method: "GET",
+          headers: {
+            "User-Agent": "Mozilla/5.0 (compatible; AI-Ticaret-Radar/1.0)",
+            Accept: "application/rss+xml, application/xml, text/xml, */*"
+          },
+          signal: controller.signal
+        }
+      );
 
-  // --------------------------------------------------
-  // 9. TİCARİ OLANLARI ÖNE AL
-  // --------------------------------------------------
+      clearTimeout(timeout);
 
-  trends.sort((a, b) => {
-    if (a.commercial !== b.commercial) {
-      return a.commercial ? -1 : 1;
+      if (!response.ok) {
+        return [];
+      }
+
+      const xml = await response.text();
+
+      if (!xml || xml.length < 100) {
+        return [];
+      }
+
+      return parseRSS(xml);
+    } catch (error) {
+      clearTimeout(timeout);
+      return [];
     }
+  }
 
-    return b.score - a.score;
-  });
+  try {
+    const liveTrends = await getGoogleTrends();
 
-  trends = trends.slice(0, 20);
+    let trends = liveTrends.length > 0 ? liveTrends : fallbackTrends;
 
-  // --------------------------------------------------
-  // 10. İSTATİSTİKLER
-  // --------------------------------------------------
+    trends.sort((a, b) => {
+      if (a.commercial !== b.commercial) {
+        return a.commercial ? -1 : 1;
+      }
 
-  const opportunityCount =
-    trends.filter(
+      return b.score - a.score;
+    });
+
+    trends = trends.slice(0, 20);
+
+    const opportunityCount = trends.filter(
       (item) => item.commercial === true
     ).length;
 
-  const sellableCount =
-    trends.filter(
+    const sellableCount = trends.filter(
       (item) => item.signal === "SELL"
     ).length;
 
-  const testCount =
-    trends.filter(
+    const testCount = trends.filter(
       (item) => item.signal === "TEST"
     ).length;
 
-  const bestScore =
-    trends.length > 0
-      ? Math.max(
-          ...trends.map(
-            (item) => Number(item.score) || 0
+    const bestScore =
+      trends.length > 0
+        ? Math.max(
+            ...trends.map((item) => Number(item.score) || 0)
           )
-        )
-      : 0;
+        : 0;
 
-  // --------------------------------------------------
-  // 11. CEVAP
-  // --------------------------------------------------
-
-  return res.status(200).json({
-    success: true,
-
-    source:
-      liveTrends.length > 0
-        ? "Google Trends"
-        : "AI Ticaret Radar — Yedek Veri",
-
-    country: "TR",
-
-    updatedAt: now,
-
-    count: trends.length,
-
-    opportunityCount,
-
-    sellableCount,
-
-    testCount,
-
-    bestScore,
-
-    trends
-  });
+    return res.status(200).json({
+      success: true,
+      source:
+        liveTrends.length > 0
+          ? "Google Trends"
+          : "AI Ticaret Radar — Yedek Veri",
+      country: "TR",
+      updatedAt: now,
+      count: trends.length,
+      opportunityCount,
+      sellableCount,
+      testCount,
+      bestScore,
+      trends
+    });
+  } catch (error) {
+    return res.status(200).json({
+      success: true,
+      source: "AI Ticaret Radar — Yedek Veri",
+      country: "TR",
+      updatedAt: now,
+      count: fallbackTrends.length,
+      opportunityCount: fallbackTrends.length,
+      sellableCount: 0,
+      testCount: fallbackTrends.filter(
+        (item) => item.signal === "TEST"
+      ).length,
+      bestScore: Math.max(
+        ...fallbackTrends.map((item) => item.score)
+      ),
+      trends: fallbackTrends
+    });
+  }
 }
