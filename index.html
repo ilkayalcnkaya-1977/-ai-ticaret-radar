@@ -848,7 +848,7 @@ function render(){
               item.signal
               ? `
                 <span class="badge">
-                  ${escapeHTML(item.signal)}
+                  ${escapeHTML(item.signalLabel || item.signal)}
                 </span>
               `
               : ""
