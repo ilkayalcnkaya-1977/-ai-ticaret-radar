@@ -193,8 +193,19 @@ export default async function handler(req, res) {
 
   function createDerivedOpportunity(trend, score) {
     const text = trend.toLocaleLowerCase("tr-TR");
-
-    if (/iphone|ıphone|telefon|samsung|xiaomi|tablet/.test(text)) {
+    if (/\b\d+\s*(pro|max|ultra|plus)\b|pro max|iphone|ıphone/.test(text)) {
+      return {
+        opportunity: true,
+        category: "Teknoloji",
+        signal: "DERIVED",
+        signalLabel: "TÜRETİLMİŞ FIRSAT",
+        commercialScore: Math.min(95, score + 10),
+        productIdea: "Telefon kılıfı, ekran koruyucu, şarj cihazı ve MagSafe aksesuarları",
+        reason: "Ürün/model araması tamamlayıcı teknoloji ürünleri için fırsat oluşturabilir."
+      };
+    }
+    if (
+  /iphone|ıphone|telefon|samsung|xiaomi|tablet|bilgisayar|laptop|kulaklık|airpods|dyson|teknoloji|kamera|pro max|ultra|plus/.test(
       return {
         opportunity: true,
         category: "Teknoloji",
