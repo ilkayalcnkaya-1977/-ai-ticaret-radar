@@ -745,7 +745,7 @@ function cleanTrends(data){
   return data
     .map((item) => ({
       ...item,
-      title: String(item.title || item.name || "Bilinmeyen trend"),
+      title: String(item.title || item.name || item.trend || "Bilinmeyen trend"),
       score: clamp(number(item.score), 0, 100),
       commercialScore: clamp(number(item.commercialScore), 0, 100),
       commercial: item.commercial === true,
