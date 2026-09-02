@@ -91,7 +91,7 @@ export default async function handler(req, res) {
     }
 
     if (
-      /iphone|ıphone|telefon|samsung|xiaomi|tablet|bilgisayar|laptop|kulaklık|airpods|dyson|teknoloji|kamera/.test(
+      
         text
       )
     ) {
