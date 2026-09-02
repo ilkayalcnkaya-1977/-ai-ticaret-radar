@@ -37,10 +37,10 @@ export default async function handler(req, res) {
   }
 
   function getTraffic(block) {
-    const match = block.match(
-      /<(?:[a-zA-Z0-9_-]+:)?approx_traffic\b[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?approx_traffic>/i
-    );
+    const regex =
+      /<(?:[a-zA-Z0-9_-]+:)?approx_traffic\b[^>]*>([\s\S]*?)<\/(?:[a-zA-Z0-9_-]+:)?approx_traffic>/i;
 
+    const match = block.match(regex);
     return match ? clean(match[1]) : "";
   }
 
@@ -51,13 +51,18 @@ export default async function handler(req, res) {
       .replace(/,/g, ".");
 
     const match = text.match(/\d+(?:\.\d+)?/);
+
     if (!match) return 0;
 
     let number = Number(match[0]);
 
-    if (text.includes("B")) number *= 1000000000;
-    else if (text.includes("M")) number *= 1000000;
-    else if (text.includes("K")) number *= 1000;
+    if (text.includes("B")) {
+      number *= 1000000000;
+    } else if (text.includes("M")) {
+      number *= 1000000;
+    } else if (text.includes("K")) {
+      number *= 1000;
+    }
 
     return Math.round(number);
   }
@@ -80,7 +85,7 @@ export default async function handler(req, res) {
   }
 
   function detectCategory(trend) {
-    const text = trend.toLocaleLowerCase("tr-TR");
+    const text = String(trend || "").toLocaleLowerCase("tr-TR");
 
     if (
       /keten|gömlek|pantolon|şort|elbise|etek|tekstil|moda|ayakkabı|çanta|takı|aksesuar|forma|eşofman/.test(
@@ -91,7 +96,7 @@ export default async function handler(req, res) {
     }
 
     if (
-      
+      /iphone|ıphone|telefon|samsung|xiaomi|tablet|bilgisayar|laptop|kulaklık|airpods|dyson|teknoloji|kamera|pro max|ultra|plus/.test(
         text
       )
     ) {
@@ -144,7 +149,7 @@ export default async function handler(req, res) {
   }
 
   function isNews(trend) {
-    const text = trend.toLocaleLowerCase("tr-TR");
+    const text = String(trend || "").toLocaleLowerCase("tr-TR");
 
     return /maç|maçlar|lig|puan durumu|fikstür|seçim|siyaset|haber|deprem|son dakika|olay|kimdir|kaç bölüm|ne zaman başlayacak|istifa/.test(
       text
@@ -152,7 +157,7 @@ export default async function handler(req, res) {
   }
 
   function directProductSignal(trend) {
-    const text = trend.toLocaleLowerCase("tr-TR");
+    const text = String(trend || "").toLocaleLowerCase("tr-TR");
 
     return /ayakkabı|çanta|gömlek|pantolon|şort|elbise|etek|takı|aksesuar|telefon|iphone|ıphone|samsung|xiaomi|tablet|bilgisayar|laptop|kulaklık|airpods|araba|otomobil|lastik|motor|motosiklet|scooter|mobilya|koltuk|masa|sandalye|dekorasyon|kahve|çikolata|gıda|yemek|tatlı|spor|forma|eşofman|fitness|koşu|otel|tatil|seyahat|valiz|dyson|kamera/.test(
       text
@@ -192,31 +197,45 @@ export default async function handler(req, res) {
   }
 
   function createDerivedOpportunity(trend, score) {
-    const text = trend.toLocaleLowerCase("tr-TR");
-    if (/\b\d+\s*(pro|max|ultra|plus)\b|pro max|iphone|ıphone/.test(text)) {
+    const text = String(trend || "").toLocaleLowerCase("tr-TR");
+
+    // TELEFON / IPHONE / PRO / MAX / ULTRA / PLUS
+    if (
+      /\b\d+\s*(pro|max|ultra|plus)\b|pro max|iphone|ıphone/.test(text)
+    ) {
       return {
         opportunity: true,
         category: "Teknoloji",
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.min(95, score + 10),
-        productIdea: "Telefon kılıfı, ekran koruyucu, şarj cihazı ve MagSafe aksesuarları",
-        reason: "Ürün/model araması tamamlayıcı teknoloji ürünleri için fırsat oluşturabilir."
+        productIdea:
+          "Telefon kılıfı, ekran koruyucu, şarj cihazı ve MagSafe aksesuarları",
+        reason:
+          "Ürün/model araması tamamlayıcı teknoloji ürünleri için fırsat oluşturabilir."
       };
     }
+
+    // DİĞER TEKNOLOJİ
     if (
-  /iphone|ıphone|telefon|samsung|xiaomi|tablet|bilgisayar|laptop|kulaklık|airpods|dyson|teknoloji|kamera|pro max|ultra|plus/.test(
+      /telefon|samsung|xiaomi|tablet|bilgisayar|laptop|kulaklık|airpods|teknoloji|kamera/.test(
+        text
+      )
+    ) {
       return {
         opportunity: true,
         category: "Teknoloji",
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.min(95, score + 8),
-        productIdea: "Telefon kılıfı, ekran koruyucu, şarj ve MagSafe aksesuarları",
-        reason: "Teknoloji ürünü araması ticari tamamlayıcı ürün talebi oluşturabilir."
+        productIdea:
+          "Telefon kılıfı, ekran koruyucu, şarj ve MagSafe aksesuarları",
+        reason:
+          "Teknoloji ürünü araması ticari tamamlayıcı ürün talebi oluşturabilir."
       };
     }
 
+    // DYSON / SÜPÜRGE
     if (/dyson|süpürge|robot süpürge/.test(text)) {
       return {
         opportunity: true,
@@ -224,11 +243,14 @@ export default async function handler(req, res) {
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.min(95, score + 8),
-        productIdea: "Süpürge başlığı, filtre, temizlik ve yedek aksesuar ürünleri",
-        reason: "Ana ürün çevresinde tamamlayıcı aksesuar ihtiyacı oluşabilir."
+        productIdea:
+          "Süpürge başlığı, filtre, temizlik ve yedek aksesuar ürünleri",
+        reason:
+          "Ana ürün çevresinde tamamlayıcı aksesuar ihtiyacı oluşabilir."
       };
     }
 
+    // MOTOR / MOTOSİKLET / SCOOTER
     if (/motosiklet|motor|scooter/.test(text)) {
       return {
         opportunity: true,
@@ -236,11 +258,14 @@ export default async function handler(req, res) {
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.min(95, score + 10),
-        productIdea: "Motosiklet telefon tutucu, çanta, yağmur ekipmanı ve bakım aksesuarları",
-        reason: "Araç ilgisi aksesuar ve bakım ürünlerine çevrilebilir."
+        productIdea:
+          "Motosiklet telefon tutucu, çanta, yağmur ekipmanı ve bakım aksesuarları",
+        reason:
+          "Araç ilgisi aksesuar ve bakım ürünlerine çevrilebilir."
       };
     }
 
+    // SPOR / MAÇ
     if (
       /galatasaray|fenerbahçe|beşiktaş|trabzonspor|futbol|basketbol|maç/.test(
         text
@@ -252,11 +277,14 @@ export default async function handler(req, res) {
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.min(90, score + 5),
-        productIdea: "Lisanssız marka kullanımı gerektirmeyen genel taraftar ve maç günü aksesuarları",
-        reason: "Spor gündemi taraftar ve maç günü ürünlerine talep oluşturabilir."
+        productIdea:
+          "Lisanssız marka kullanımı gerektirmeyen genel taraftar ve maç günü aksesuarları",
+        reason:
+          "Spor gündemi taraftar ve maç günü ürünlerine talep oluşturabilir."
       };
     }
 
+    // EKONOMİK GÜNDEM
     if (/altın|dolar|euro|asgari ücret|emekli/.test(text)) {
       return {
         opportunity: true,
@@ -264,11 +292,14 @@ export default async function handler(req, res) {
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.max(45, score - 5),
-        productIdea: "Bütçe dostu tüketim, indirim ve fiyat karşılaştırma odaklı ürün fırsatları",
-        reason: "Ekonomik gündem tüketici davranışını fiyat/indirim odaklı değiştirebilir."
+        productIdea:
+          "Bütçe dostu tüketim, indirim ve fiyat karşılaştırma odaklı ürün fırsatları",
+        reason:
+          "Ekonomik gündem tüketici davranışını fiyat/indirim odaklı değiştirebilir."
       };
     }
 
+    // SEYAHAT
     if (/valiz|tatil|seyahat|uçuş|otel/.test(text)) {
       return {
         opportunity: true,
@@ -276,8 +307,10 @@ export default async function handler(req, res) {
         signal: "DERIVED",
         signalLabel: "TÜRETİLMİŞ FIRSAT",
         commercialScore: Math.min(90, score + 8),
-        productIdea: "Valiz düzenleyici, seyahat çantası, boyun yastığı ve seyahat aksesuarları",
-        reason: "Seyahat ilgisi tamamlayıcı seyahat ürünlerine dönüştürülebilir."
+        productIdea:
+          "Valiz düzenleyici, seyahat çantası, boyun yastığı ve seyahat aksesuarları",
+        reason:
+          "Seyahat ilgisi tamamlayıcı seyahat ürünlerine dönüştürülebilir."
       };
     }
 
@@ -356,7 +389,9 @@ export default async function handler(req, res) {
   }
 
   function parseRSS(xml) {
-    const blocks = xml.split(/<item\b/i).slice(1);
+    const blocks = String(xml || "")
+      .split(/<item\b/i)
+      .slice(1);
 
     return blocks
       .map((block) => {
@@ -409,11 +444,15 @@ export default async function handler(req, res) {
 
       clearTimeout(timeout);
 
-      if (!response.ok) return [];
+      if (!response.ok) {
+        return [];
+      }
 
       const xml = await response.text();
 
-      if (!xml || xml.length < 100) return [];
+      if (!xml || xml.length < 100) {
+        return [];
+      }
 
       return parseRSS(xml);
     } catch (error) {
@@ -427,27 +466,32 @@ export default async function handler(req, res) {
 
     const usingFallback = liveTrends.length === 0;
 
-    let trends = usingFallback
-      ? fallbackTrends.map((item) => {
-          const category = detectCategory(item.trend);
-          const result = classifyTrend(
-            item.trend,
-            item.score,
-            category
-          );
+    let trends;
 
-          return {
-            ...item,
-            category,
-            commercial: result.commercial,
-            signal: "TEST_DATA",
-            signalLabel: "TEST VERİSİ — CANLI VERİ YOK",
-            commercialScore: result.commercialScore,
-            productIdea: result.productIdea,
-            reason: result.reason
-          };
-        })
-      : liveTrends;
+    if (usingFallback) {
+      trends = fallbackTrends.map((item) => {
+        const category = detectCategory(item.trend);
+
+        const result = classifyTrend(
+          item.trend,
+          item.score,
+          category
+        );
+
+        return {
+          ...item,
+          category: result.category || category,
+          commercial: result.commercial,
+          signal: "TEST_DATA",
+          signalLabel: "TEST VERİSİ — CANLI VERİ YOK",
+          commercialScore: result.commercialScore,
+          productIdea: result.productIdea,
+          reason: result.reason
+        };
+      });
+    } else {
+      trends = liveTrends;
+    }
 
     trends.sort((a, b) => {
       if (a.commercial !== b.commercial) {
@@ -500,7 +544,7 @@ export default async function handler(req, res) {
       live: !usingFallback,
       country: "TR",
       updatedAt: now,
-      version: "3.0-commercial",
+      version: "3.1-commercial",
       count: trends.length,
       opportunityCount,
       sellableCount,
@@ -516,25 +560,34 @@ export default async function handler(req, res) {
       live: false,
       country: "TR",
       updatedAt: now,
-      version: "3.0-commercial",
+      version: "3.1-commercial",
       count: fallbackTrends.length,
-      opportunityCount: 0,
+      opportunityCount: fallbackTrends.length,
       sellableCount: 0,
       testCount: fallbackTrends.length,
       derivedCount: 0,
       bestScore: Math.max(
         ...fallbackTrends.map((item) => item.score)
       ),
-      trends: fallbackTrends.map((item) => ({
-        ...item,
-        category: detectCategory(item.trend),
-        commercial: false,
-        signal: "TEST_DATA",
-        signalLabel: "TEST VERİSİ — CANLI VERİ YOK",
-        commercialScore: 0,
-        productIdea: "Canlı veri bekleniyor",
-        reason: "Google Trends verisi alınamadı."
-      }))
+      trends: fallbackTrends.map((item) => {
+        const category = detectCategory(item.trend);
+        const result = classifyTrend(
+          item.trend,
+          item.score,
+          category
+        );
+
+        return {
+          ...item,
+          category: result.category || category,
+          commercial: result.commercial,
+          signal: "TEST_DATA",
+          signalLabel: "TEST VERİSİ — CANLI VERİ YOK",
+          commercialScore: result.commercialScore,
+          productIdea: result.productIdea,
+          reason: result.reason
+        };
+      })
     });
   }
 }
